@@ -3,11 +3,15 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"os"
 	"pet/models"
 	"strconv"
 	"strings"
+	"time"
+	"web"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/validation"
 )
 
 // oprations for Photos
@@ -30,14 +34,47 @@ func (this *PhotosController) URLMapping() {
 // @Failure 403 body is empty
 // @router / [post]
 func (this *PhotosController) Post() {
+	var uploadPhotoPath string = "static/uploads/photos"
 	var v models.Photos
-	json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	if id, err := models.AddPhotos(&v); err == nil {
-		this.Data["json"] = map[string]int64{"id": id}
+	valid := validation.Validation{}
+	this.ParseForm(&v)
+	passed, _ := valid.Valid(&v)
+	if !passed {
+		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = err.Error()
+		todayDateDir := "/" + helper.GetTodayDate()
+		if _, err := os.Stat(uploadPhotoPath + todayDateDir); os.IsNotExist(err) {
+			os.Mkdir(uploadPhotoPath+todayDateDir, 0777)
+		}
+		currentUser := this.GetSession("user").(models.Users)
+		photoName := helper.GetGuid(currentUser.Id)
+		dateSubdir := "/" + string(photoName[0]) + string(photoName[1])
+
+		if _, err := os.Stat(uploadPhotoPath + todayDateDir + dateSubdir); os.IsNotExist(err) {
+			os.Mkdir(uploadPhotoPath+todayDateDir+dateSubdir, 0777)
+		}
+
+		imagePath := uploadPhotoPath + todayDateDir + dateSubdir + "/" + photoName + ".jpg"
+
+		this.SaveToFile("photo", imagePath)
+		v.Path = imagePath
+		v.CreatedAt = time.Now()
+		v.UpdatedAt = time.Now()
+		v.Likes = 0
+		v.UserId = &currentUser
+
+		if id, err := models.AddPhotos(&v); err == nil {
+			v.Id = int(id)
+			outPut := helper.Reponse(0, v, "创建成功")
+			this.Data["json"] = outPut
+		} else {
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
+		}
 	}
 	this.ServeJson()
+
 }
 
 // @Title Get

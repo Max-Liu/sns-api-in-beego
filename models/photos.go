@@ -12,7 +12,7 @@ import (
 
 type Photos struct {
 	Id        int       `orm:"column(id);pk"`
-	Title     string    `orm:"column(title);size(45);null"`
+	Title     string    `orm:"column(title);size(45);null" form:"title" valid:"Required"`
 	Path      string    `orm:"column(path);null"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
