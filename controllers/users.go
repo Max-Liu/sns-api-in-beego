@@ -1,10 +1,8 @@
 package controllers
 
 import (
-	"errors"
 	"pet/models"
 	"strconv"
-	"strings"
 	"time"
 	"web"
 
@@ -42,13 +40,16 @@ func (this *UsersController) Post() {
 	} else {
 		v.CreatedAt = time.Now()
 		v.UpdatedAt = time.Now()
+
 		if id, err := models.AddUsers(&v); err == nil {
-			this.Data["json"] = map[string]int64{"id": id}
+			v.Id = int(id)
+			outPut := helper.Reponse(0, v, "创建成功")
+			this.Data["json"] = outPut
 		} else {
-			this.Data["json"] = err.Error()
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
 		}
 	}
-
 	this.ServeJson()
 }
 
@@ -85,7 +86,7 @@ func (this *UsersController) Put() {
 			}
 		}
 	} else {
-		outPut := helper.Reponse(1, nil, "no acess")
+		outPut := helper.Reponse(1, nil, "no access")
 		this.Data["json"] = outPut
 	}
 
@@ -129,53 +130,56 @@ func (this *UsersController) GetOne() {
 // @Failure 403
 // @router / [get]
 func (this *UsersController) GetAll() {
-	var fields []string
-	var sortby []string
-	var order []string
-	var query map[string]string = make(map[string]string)
-	var limit int64 = 10
-	var offset int64 = 0
+	user := this.GetSession("user")
+	outPut := helper.Reponse(0, user, "")
+	this.Data["json"] = outPut
+	//var fields []string
+	//var sortby []string
+	//var order []string
+	//var query map[string]string = make(map[string]string)
+	//var limit int64 = 10
+	//var offset int64 = 0
 
-	// fields: col1,col2,entity.col3
-	if v := this.GetString("fields"); v != "" {
-		fields = strings.Split(v, ",")
-	}
-	// limit: 10 (default is 10)
-	if v, err := this.GetInt("limit"); err == nil {
-		limit = v
-	}
-	// offset: 0 (default is 0)
-	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
-	}
-	// sortby: col1,col2
-	if v := this.GetString("sortby"); v != "" {
-		sortby = strings.Split(v, ",")
-	}
-	// order: desc,asc
-	if v := this.GetString("order"); v != "" {
-		order = strings.Split(v, ",")
-	}
-	// query: k:v,k:v
-	if v := this.GetString("query"); v != "" {
-		for _, cond := range strings.Split(v, ",") {
-			kv := strings.Split(cond, ":")
-			if len(kv) != 2 {
-				this.Data["json"] = errors.New("Error: invalid query key/value pair")
-				this.ServeJson()
-				return
-			}
-			k, v := kv[0], kv[1]
-			query[k] = v
-		}
-	}
+	//// fields: col1,col2,entity.col3
+	//if v := this.GetString("fields"); v != "" {
+	//fields = strings.Split(v, ",")
+	//}
+	//// limit: 10 (default is 10)
+	//if v, err := this.GetInt("limit"); err == nil {
+	//limit = v
+	//}
+	//// offset: 0 (default is 0)
+	//if v, err := this.GetInt("offset"); err == nil {
+	//offset = v
+	//}
+	//// sortby: col1,col2
+	//if v := this.GetString("sortby"); v != "" {
+	//sortby = strings.Split(v, ",")
+	//}
+	//// order: desc,asc
+	//if v := this.GetString("order"); v != "" {
+	//order = strings.Split(v, ",")
+	//}
+	//// query: k:v,k:v
+	//if v := this.GetString("query"); v != "" {
+	//for _, cond := range strings.Split(v, ",") {
+	//kv := strings.Split(cond, ":")
+	//if len(kv) != 2 {
+	//this.Data["json"] = errors.New("Error: invalid query key/value pair")
+	//this.ServeJson()
+	//return
+	//}
+	//k, v := kv[0], kv[1]
+	//query[k] = v
+	//}
+	//}
 
-	l, err := models.GetAllUsers(query, fields, sortby, order, offset, limit)
-	if err != nil {
-		this.Data["json"] = err.Error()
-	} else {
-		this.Data["json"] = l
-	}
+	//l, err := models.GetAllUsers(query, fields, sortby, order, offset, limit)
+	//if err != nil {
+	//this.Data["json"] = err.Error()
+	//} else {
+	//this.Data["json"] = l
+	//}
 	this.ServeJson()
 }
 
@@ -201,13 +205,16 @@ func (this *UsersController) Login() {
 		outPut := helper.Reponse(0, &user, "登陆成功")
 		this.Data["json"] = outPut
 	} else {
+
 		email := this.GetString("email")
 		password := this.GetString("password")
-		user, err := models.GetUserByLoginfo(email, password)
+		phone := this.GetString("phone")
+		name := this.GetString("name")
+		user, err := models.GetUserByLoginfo(password, email, phone, name)
+
 		if err == nil {
 			outPut := helper.Reponse(0, &user, "登陆成功")
 			this.SetSession("user", user)
-
 			this.Data["json"] = outPut
 		} else {
 			outPut := helper.Reponse(1, nil, "用户信息不存在")

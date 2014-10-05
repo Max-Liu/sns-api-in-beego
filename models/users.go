@@ -12,10 +12,10 @@ import (
 
 type Users struct {
 	Id        int       `orm:"column(id);auto"`
-	Email     string    `orm:"column(email);size(128);null" form:"email" vlid:"Email"`
+	Email     string    `orm:"column(email);size(128);null" form:"email" valid:"Email"`
 	Password  string    `orm:"column(password);size(128);null" form:"password" valid:"Required"`
 	Gender    int       `orm:"column(gender);null" form:"gender"`
-	Phone     string    `orm:"column(phone);size(20);null" form:"phone" valid:"Required;Phone"`
+	Phone     string    `orm:"column(phone);size(20);" form:"phone" valid:"Required;Phone"`
 	Birthday  string    `orm:"column(birthday);size(20);null" form:"birthday"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
@@ -34,7 +34,7 @@ func init() {
 func AddUsers(m *Users) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
-	return
+	return id, err
 }
 
 // GetUsersById retrieves Users by Id. Returns error if
@@ -156,10 +156,20 @@ func DeleteUsers(id int) (err error) {
 
 //}
 
-func GetUserByLoginfo(info string, password string) (user Users, err error) {
+func GetUserByLoginfo(password string, info ...string) (user Users, err error) {
 	o := orm.NewOrm()
-	user = Users{Email: info}
+
+	user = Users{Email: info[0]}
 	err = o.Read(&user, "Email")
+
+	if err != nil && info[1] != "" {
+		user = Users{Phone: info[1]}
+		err = o.Read(&user, "Phone")
+	}
+	if err != nil && info[2] != "" {
+		user = Users{Name: info[2]}
+		err = o.Read(&user, "Name")
+	}
 
 	if user.Password != password {
 		err = errors.New("密码不正确")
