@@ -6,8 +6,11 @@ import (
 	"pet/models"
 	"strconv"
 	"strings"
+	"time"
+	"web"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/validation"
 )
 
 // oprations for UserRelations
@@ -31,12 +34,46 @@ func (this *UserRelationsController) URLMapping() {
 // @router / [post]
 func (this *UserRelationsController) Post() {
 	var v models.UserRelations
-	json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	if id, err := models.AddUserRelations(&v); err == nil {
-		this.Data["json"] = map[string]int64{"id": id}
+
+	valid := validation.Validation{}
+	this.ParseForm(&v)
+	v.Follower = this.GetSession("user").(models.Users).Id
+	passed, _ := valid.Valid(&v)
+	if !passed {
+		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = err.Error()
+
+		if v.Follower == v.Following {
+			outPut := helper.Reponse(1, nil, "无效的关系")
+			this.Data["json"] = outPut
+		} else {
+			v.CreatedAt = time.Now()
+			v.UpdatedAt = time.Now()
+
+			if id, err := models.AddUserRelations(&v); err == nil {
+				v.Id = int(id)
+				where := make(map[string]string)
+				where["id"] = strconv.Itoa(v.Follower)
+				helper.AddOne("users", "following", where)
+				where["id"] = strconv.Itoa(v.Following)
+				helper.AddOne("users", "follower", where)
+
+				outPut := helper.Reponse(0, v, "创建成功")
+				this.Data["json"] = outPut
+			} else {
+				outPut := helper.Reponse(1, nil, err.Error())
+				this.Data["json"] = outPut
+			}
+		}
 	}
+
+	//json.Unmarshal(this.Ctx.Input.RequestBody, &v)
+	//if id, err := models.AddUserRelations(&v); err == nil {
+	//this.Data["json"] = map[string]int64{"id": id}
+	//} else {
+	//this.Data["json"] = err.Error()
+	//}
 	this.ServeJson()
 }
 
@@ -147,12 +184,42 @@ func (this *UserRelationsController) Put() {
 // @Failure 403 id is empty
 // @router /:id [delete]
 func (this *UserRelationsController) Delete() {
-	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
-	if err := models.DeleteUserRelations(id); err == nil {
-		this.Data["json"] = "OK"
+	var v models.UserRelations
+
+	followingIdStr := this.Ctx.Input.Params[":id"]
+	followingId, _ := strconv.Atoi(followingIdStr)
+
+	valid := validation.Validation{}
+	this.ParseForm(&v)
+	v.Follower = this.GetSession("user").(models.Users).Id
+	v.Following = followingId
+
+	passed, _ := valid.Valid(&v)
+	if !passed {
+		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = err.Error()
+		if v.Follower == v.Following {
+			outPut := helper.Reponse(1, nil, "无效的关系")
+			this.Data["json"] = outPut
+		} else {
+			v.CreatedAt = time.Now()
+			v.UpdatedAt = time.Now()
+
+			if err := models.DeleteUserRelationsByUsers(v.Follower, followingId); err == nil {
+				where := make(map[string]string)
+				where["id"] = strconv.Itoa(v.Follower)
+				helper.MinusOne("users", "following", where)
+				where["id"] = strconv.Itoa(v.Following)
+				helper.MinusOne("users", "follower", where)
+
+				outPut := helper.Reponse(0, v, "取消关注成功")
+				this.Data["json"] = outPut
+			} else {
+				outPut := helper.Reponse(1, nil, err.Error())
+				this.Data["json"] = outPut
+			}
+		}
 	}
 	this.ServeJson()
 }

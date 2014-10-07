@@ -12,8 +12,8 @@ import (
 
 type UserRelations struct {
 	Id        int       `orm:"column(id);pk"`
-	Following int       `orm:"column(following);null"`
-	Follower  string    `orm:"column(follower);size(45);null"`
+	Following int       `orm:"column(following);" form:"following" valid:"Required"`
+	Follower  int       `orm:"column(follower);size(45);" form:"follower" valid:"Required"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 }
@@ -139,6 +139,18 @@ func DeleteUserRelations(id int) (err error) {
 	if err = o.Read(&v); err == nil {
 		var num int64
 		if num, err = o.Delete(&UserRelations{Id: id}); err == nil {
+			fmt.Println("Number of records deleted in database:", num)
+		}
+	}
+	return
+}
+func DeleteUserRelationsByUsers(follower, following int) (err error) {
+	o := orm.NewOrm()
+	v := UserRelations{Follower: follower, Following: following}
+	// ascertain id exists in the database
+	if err = o.Read(&v, "follower", "following"); err == nil {
+		var num int64
+		if num, err = o.Delete(&v); err == nil {
 			fmt.Println("Number of records deleted in database:", num)
 		}
 	}
