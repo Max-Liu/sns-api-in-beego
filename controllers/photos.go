@@ -14,6 +14,8 @@ import (
 	"github.com/astaxie/beego/validation"
 )
 
+var uploadPhotoPath string = "static/uploads/photos"
+
 // oprations for Photos
 type PhotosController struct {
 	beego.Controller
@@ -34,7 +36,6 @@ func (this *PhotosController) URLMapping() {
 // @Failure 403 body is empty
 // @router / [post]
 func (this *PhotosController) Post() {
-	var uploadPhotoPath string = "static/uploads/photos"
 	var v models.Photos
 	valid := validation.Validation{}
 	this.ParseForm(&v)
@@ -57,24 +58,29 @@ func (this *PhotosController) Post() {
 
 		imagePath := uploadPhotoPath + todayDateDir + dateSubdir + "/" + photoName + ".jpg"
 
-		this.SaveToFile("photo", imagePath)
-		v.Path = imagePath
-		v.CreatedAt = time.Now()
-		v.UpdatedAt = time.Now()
-		v.Likes = 0
-		v.UserId = &currentUser
-
-		if id, err := models.AddPhotos(&v); err == nil {
-			v.Id = int(id)
-			outPut := helper.Reponse(0, v, "创建成功")
-			this.Data["json"] = outPut
-		} else {
+		err := this.SaveToFile("photo", imagePath)
+		if err != nil {
 			outPut := helper.Reponse(1, nil, err.Error())
 			this.Data["json"] = outPut
+
+		} else {
+			v.Path = imagePath
+			v.CreatedAt = time.Now()
+			v.UpdatedAt = time.Now()
+			v.Likes = 0
+			v.UserId = &currentUser
+
+			if id, err := models.AddPhotos(&v); err == nil {
+				v.Id = int(id)
+				outPut := helper.Reponse(0, v, "创建成功")
+				this.Data["json"] = outPut
+			} else {
+				outPut := helper.Reponse(1, nil, err.Error())
+				this.Data["json"] = outPut
+			}
 		}
 	}
 	this.ServeJson()
-
 }
 
 // @Title Get
