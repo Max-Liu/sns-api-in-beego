@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"pet/models"
 	"strconv"
@@ -120,45 +119,29 @@ func (this *PhotosController) GetAll() {
 	var limit int64 = 10
 	var offset int64 = 0
 
+	userIdInt := this.GetSession("user").(models.Users).Id
+	userIdStr := strconv.Itoa(userIdInt)
+	query["user_id"] = userIdStr
+
 	// fields: col1,col2,entity.col3
 	if v := this.GetString("fields"); v != "" {
 		fields = strings.Split(v, ",")
 	}
-	// limit: 10 (default is 10)
-	if v, err := this.GetInt("limit"); err == nil {
-		limit = v
-	}
-	// offset: 0 (default is 0)
+
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = v
 	}
-	// sortby: col1,col2
-	if v := this.GetString("sortby"); v != "" {
-		sortby = strings.Split(v, ",")
-	}
-	// order: desc,asc
-	if v := this.GetString("order"); v != "" {
-		order = strings.Split(v, ",")
-	}
-	// query: k:v,k:v
-	if v := this.GetString("query"); v != "" {
-		for _, cond := range strings.Split(v, ",") {
-			kv := strings.Split(cond, ":")
-			if len(kv) != 2 {
-				this.Data["json"] = errors.New("Error: invalid query key/value pair")
-				this.ServeJson()
-				return
-			}
-			k, v := kv[0], kv[1]
-			query[k] = v
-		}
-	}
+
+	sortby = []string{"id"}
+	order = []string{"desc"}
 
 	l, err := models.GetAllPhotos(query, fields, sortby, order, offset, limit)
 	if err != nil {
-		this.Data["json"] = err.Error()
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = l
+		outPut := helper.Reponse(0, l, "")
+		this.Data["json"] = outPut
 	}
 	this.ServeJson()
 }
