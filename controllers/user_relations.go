@@ -26,6 +26,13 @@ func (this *UserRelationsController) URLMapping() {
 	this.Mapping("Delete", this.Delete)
 }
 
+var fields []string
+var sortby []string = []string{"id"}
+var order []string = []string{"desc"}
+var query map[string]string = make(map[string]string)
+var limit int64 = 10
+var offset int64 = 0
+
 // @Title Post
 // @Description create UserRelations
 // @Param	body		body 	models.UserRelations	true		"body for UserRelations content"
@@ -34,11 +41,32 @@ func (this *UserRelationsController) URLMapping() {
 // @router / [post]
 func (this *UserRelationsController) Post() {
 	var v models.UserRelations
+	var err error
 
 	valid := validation.Validation{}
 	this.ParseForm(&v)
-	v.Follower = this.GetSession("user").(models.Users).Id
+	follower := this.GetSession("user").(models.Users)
+	v.Follower = &follower
+
+	followingIdStr := this.GetString("following")
+	followingId, _ := strconv.Atoi(followingIdStr)
+
+	v.Following, err = models.GetUsersById(followingId)
+	if err != nil {
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
+		this.ServeJson()
+		return
+	}
+	if follower.Id == v.Following.Id {
+		outPut := helper.Reponse(1, nil, "无效的关注对象")
+		this.Data["json"] = outPut
+		this.ServeJson()
+		return
+	}
+
 	passed, _ := valid.Valid(&v)
+
 	if !passed {
 		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
 		this.Data["json"] = outPut
@@ -54,9 +82,9 @@ func (this *UserRelationsController) Post() {
 			if id, err := models.AddUserRelations(&v); err == nil {
 				v.Id = int(id)
 				where := make(map[string]string)
-				where["id"] = strconv.Itoa(v.Follower)
+				where["id"] = strconv.Itoa(v.Follower.Id)
 				helper.AddOne("users", "following", where)
-				where["id"] = strconv.Itoa(v.Following)
+				where["id"] = strconv.Itoa(v.Following.Id)
 				helper.AddOne("users", "follower", where)
 
 				outPut := helper.Reponse(0, v, "创建成功")
@@ -68,12 +96,6 @@ func (this *UserRelationsController) Post() {
 		}
 	}
 
-	//json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	//if id, err := models.AddUserRelations(&v); err == nil {
-	//this.Data["json"] = map[string]int64{"id": id}
-	//} else {
-	//this.Data["json"] = err.Error()
-	//}
 	this.ServeJson()
 }
 
@@ -107,12 +129,6 @@ func (this *UserRelationsController) GetOne() {
 // @Failure 403
 // @router / [get]
 func (this *UserRelationsController) GetAll() {
-	var fields []string
-	var sortby []string
-	var order []string
-	var query map[string]string = make(map[string]string)
-	var limit int64 = 10
-	var offset int64 = 0
 
 	// fields: col1,col2,entity.col3
 	if v := this.GetString("fields"); v != "" {
@@ -191,8 +207,8 @@ func (this *UserRelationsController) Delete() {
 
 	valid := validation.Validation{}
 	this.ParseForm(&v)
-	v.Follower = this.GetSession("user").(models.Users).Id
-	v.Following = followingId
+	follower := this.GetSession("user").(models.Users)
+	v.Follower = &follower
 
 	passed, _ := valid.Valid(&v)
 	if !passed {
@@ -206,20 +222,63 @@ func (this *UserRelationsController) Delete() {
 			v.CreatedAt = time.Now()
 			v.UpdatedAt = time.Now()
 
-			if err := models.DeleteUserRelationsByUsers(v.Follower, followingId); err == nil {
+			if num, err := models.DeleteUserRelationsByUsers(v.Follower.Id, followingId); err == nil {
 				where := make(map[string]string)
-				where["id"] = strconv.Itoa(v.Follower)
+				where["id"] = strconv.Itoa(v.Follower.Id)
 				helper.MinusOne("users", "following", where)
-				where["id"] = strconv.Itoa(v.Following)
+				where["id"] = strconv.Itoa(v.Following.Id)
 				helper.MinusOne("users", "follower", where)
 
-				outPut := helper.Reponse(0, v, "取消关注成功")
+				outPut := helper.Reponse(0, num, "取消关注成功")
 				this.Data["json"] = outPut
 			} else {
 				outPut := helper.Reponse(1, nil, err.Error())
 				this.Data["json"] = outPut
 			}
 		}
+	}
+	this.ServeJson()
+}
+func (this *UserRelationsController) Follower() {
+	userSession := this.GetSession("user").(models.Users)
+	userIdStr := strconv.Itoa(userSession.Id)
+
+	if v, err := this.GetInt("offset"); err == nil {
+		offset = v
+	}
+
+	query["following"] = userIdStr
+
+	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
+	if err != nil {
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
+	} else {
+		outPut := helper.Reponse(0, l, "")
+		this.Data["json"] = outPut
+	}
+	this.ServeJson()
+}
+
+func (this *UserRelationsController) Following() {
+
+	userSession := this.GetSession("user").(models.Users)
+	userIdStr := strconv.Itoa(userSession.Id)
+
+	if v, err := this.GetInt("offset"); err == nil {
+		offset = v
+	}
+
+	query["follower"] = userIdStr
+	fields = []string{"Following"}
+
+	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
+	if err != nil {
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
+	} else {
+		outPut := helper.Reponse(0, l, "")
+		this.Data["json"] = outPut
 	}
 	this.ServeJson()
 }

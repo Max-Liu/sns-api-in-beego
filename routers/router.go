@@ -52,7 +52,9 @@ func init() {
 			),
 		),
 
-		beego.NSNamespace("/user_relations",
+		beego.NSNamespace("/ul",
+			beego.NSRouter("/follower", &controllers.UserRelationsController{}, "get:Follower"),
+			beego.NSRouter("/following", &controllers.UserRelationsController{}, "get:Following"),
 			beego.NSInclude(
 				&controllers.UserRelationsController{},
 			),

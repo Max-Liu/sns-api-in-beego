@@ -12,8 +12,8 @@ import (
 
 type UserRelations struct {
 	Id        int       `orm:"column(id);pk"`
-	Following int       `orm:"column(following);" form:"following" valid:"Required"`
-	Follower  int       `orm:"column(follower);size(45);" form:"follower" valid:"Required"`
+	Following *Users    `orm:"column(following);rel(fk)" form:"following" valid:"Required"`
+	Follower  *Users    `orm:"column(follower);size(45);rel(fk)" form:"follower" valid:"Required"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 }
@@ -51,7 +51,7 @@ func GetAllUserRelations(query map[string]string, fields []string, sortby []stri
 	for k, v := range query {
 		// rewrite dot-notation to Object__Attribute
 		k = strings.Replace(k, ".", "__", -1)
-		qs = qs.Filter(k, v)
+		qs = qs.Filter(k, v).RelatedSel()
 	}
 	// order by:
 	var sortFields []string
@@ -144,15 +144,24 @@ func DeleteUserRelations(id int) (err error) {
 	}
 	return
 }
-func DeleteUserRelationsByUsers(follower, following int) (err error) {
+func DeleteUserRelationsByUsers(follower, following int) (num int64, err error) {
+
 	o := orm.NewOrm()
-	v := UserRelations{Follower: follower, Following: following}
+	followerUser := Users{Id: follower}
+	err = o.Read(&followerUser)
+	if err != nil {
+		return 0, err
+	}
+
+	followingUser := Users{Id: following}
+	err = o.Read(&followingUser)
+	if err != nil {
+		return 0, err
+	}
+	v := UserRelations{Follower: &followerUser, Following: &followingUser}
 	// ascertain id exists in the database
 	if err = o.Read(&v, "follower", "following"); err == nil {
-		var num int64
-		if num, err = o.Delete(&v); err == nil {
-			fmt.Println("Number of records deleted in database:", num)
-		}
+		num, err = o.Delete(&v)
 	}
-	return
+	return num, err
 }
