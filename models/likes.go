@@ -14,7 +14,7 @@ type Likes struct {
 	Id        int       `orm:"column(id);pk"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
-	TargetId  int       `orm:"column(target_id)"`
+	TargetId  *Photos   `orm:"column(target_id);rel(fk)" valid:"Required"`
 	UserId    *Users    `orm:"column(user_id);rel(fk)"`
 }
 
@@ -143,4 +143,24 @@ func DeleteLikes(id int) (err error) {
 		}
 	}
 	return
+}
+
+func DeleteLikedPhoto(userId, photoId int) (num int64, err error) {
+	o := orm.NewOrm()
+	target := Photos{Id: photoId}
+	err = o.Read(&target)
+	if err != nil {
+		return 0, err
+	}
+	user := Users{Id: userId}
+	err = o.Read(&user)
+	if err != nil {
+		return 0, err
+	}
+	v := Likes{TargetId: &target, UserId: &user}
+
+	if err = o.Read(&v, "target_id", "user_id"); err == nil {
+		num, err = o.Delete(&v)
+	}
+	return num, err
 }

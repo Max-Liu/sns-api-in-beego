@@ -6,8 +6,11 @@ import (
 	"pet/models"
 	"strconv"
 	"strings"
+	"time"
+	"web"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/validation"
 )
 
 // oprations for Likes
@@ -31,12 +34,41 @@ func (this *LikesController) URLMapping() {
 // @router / [post]
 func (this *LikesController) Post() {
 	var v models.Likes
-	json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	if id, err := models.AddLikes(&v); err == nil {
-		this.Data["json"] = map[string]int64{"id": id}
+	var err error
+
+	valid := validation.Validation{}
+	this.ParseForm(&v)
+	photoIdStr := this.GetString("photo_id")
+	photoId, _ := strconv.Atoi(photoIdStr)
+
+	passed, _ := valid.Valid(&v)
+	if !passed {
+		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = err.Error()
+		v.TargetId, err = models.GetPhotosById(photoId)
+		if err != nil {
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
+			this.ServeJson()
+			return
+		}
+		v.CreatedAt = time.Now()
+		v.UpdatedAt = time.Now()
+		userSession := this.GetSession("user").(models.Users)
+		v.UserId = &userSession
+		v.TargetId.UserId = &userSession
+
+		if id, err := models.AddLikes(&v); err == nil {
+			v.Id = int(id)
+			outPut := helper.Reponse(0, v, "创建成功")
+			this.Data["json"] = outPut
+		} else {
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
+		}
 	}
+
 	this.ServeJson()
 }
 
@@ -147,12 +179,25 @@ func (this *LikesController) Put() {
 // @Failure 403 id is empty
 // @router /:id [delete]
 func (this *LikesController) Delete() {
+	var v models.Likes
 	idStr := this.Ctx.Input.Params[":id"]
 	id, _ := strconv.Atoi(idStr)
-	if err := models.DeleteLikes(id); err == nil {
-		this.Data["json"] = "OK"
+
+	valid := validation.Validation{}
+	this.ParseForm(&v)
+	passed, _ := valid.Valid(&v)
+	if !passed {
+		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = err.Error()
+		userSession := this.GetSession("user").(models.Users)
+		if num, err := models.DeleteLikedPhoto(userSession.Id, id); err == nil {
+			outPut := helper.Reponse(0, num, "删除成功")
+			this.Data["json"] = outPut
+		} else {
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
+		}
 	}
 	this.ServeJson()
 }
