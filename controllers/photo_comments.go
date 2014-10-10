@@ -6,8 +6,11 @@ import (
 	"pet/models"
 	"strconv"
 	"strings"
+	"time"
+	"web"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/validation"
 )
 
 // oprations for PhotoComments
@@ -31,11 +34,40 @@ func (this *PhotoCommentsController) URLMapping() {
 // @router / [post]
 func (this *PhotoCommentsController) Post() {
 	var v models.PhotoComments
-	json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	if id, err := models.AddPhotoComments(&v); err == nil {
-		this.Data["json"] = map[string]int64{"id": id}
+	var err error
+	valid := validation.Validation{}
+	this.ParseForm(&v)
+
+	photoIdStr := this.GetString("photo_id")
+	photoId, _ := strconv.Atoi(photoIdStr)
+
+	passed, _ := valid.Valid(&v)
+	if !passed {
+		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = err.Error()
+		v.Photo, err = models.GetPhotosById(photoId)
+		if err != nil {
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
+			this.ServeJson()
+			return
+		}
+		v.CreatedAt = time.Now()
+		v.UpdatedAt = time.Now()
+		userSession := this.GetSession("user").(models.Users)
+		v.User = &userSession
+
+		if id, err := models.AddPhotoComments(&v); err == nil {
+			v.Id = int(id)
+			outPut := helper.Reponse(0, v, "创建成功")
+			this.Data["json"] = outPut
+		} else {
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
+		}
+		outPut := helper.Reponse(0, v, "创建成功")
+		this.Data["json"] = outPut
 	}
 	this.ServeJson()
 }

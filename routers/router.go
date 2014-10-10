@@ -34,7 +34,7 @@ func init() {
 			),
 		),
 
-		beego.NSNamespace("/photo_comments",
+		beego.NSNamespace("/comments",
 			beego.NSInclude(
 				&controllers.PhotoCommentsController{},
 			),
