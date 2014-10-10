@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,7 +17,7 @@ type Photos struct {
 	Path      string    `orm:"column(path);null"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
-	UserId    *Users    `orm:"column(user_id);rel(fk)"`
+	User      *Users    `orm:"column(user_id);rel(fk)"`
 	Likes     int       `orm:"column(likes);null"`
 }
 
@@ -34,10 +35,10 @@ func AddPhotos(m *Photos) (id int64, err error) {
 
 // GetPhotosById retrieves Photos by Id. Returns error if
 // Id doesn't exist
-func GetPhotosById(id int) (v *Photos, err error) {
+func GetPhotosById(id int, fields ...string) (v *Photos, err error) {
 	o := orm.NewOrm()
 	v = &Photos{Id: id}
-	if err = o.Read(v); err == nil {
+	if err = o.Read(v, fields...); err == nil {
 		return v, nil
 	}
 	return nil, err
@@ -145,4 +146,71 @@ func DeletePhotos(id int) (err error) {
 		}
 	}
 	return
+}
+func GetMyPhotos(query map[string]string, fields []string, sortby []string, order []string,
+	offset int64, limit int64) (l []orm.Params, err error) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(new(Photos))
+	// query k=v
+	for k, v := range query {
+		// rewrite dot-notation to Object__Attribute
+		k = strings.Replace(k, ".", "__", -1)
+		qs = qs.Filter(k, v)
+	}
+	// order by:
+	var sortFields []string
+	if len(sortby) != 0 {
+		if len(sortby) == len(order) {
+			// 1) for each sort field, there is an associated order
+			for i, v := range sortby {
+				orderby := ""
+				if order[i] == "desc" {
+					orderby = "-" + v
+				} else if order[i] == "asc" {
+					orderby = v
+				} else {
+					return nil, errors.New("Error: Invalid order. Must be either [asc|desc]")
+				}
+				sortFields = append(sortFields, orderby)
+			}
+			qs = qs.OrderBy(sortFields...)
+		} else if len(sortby) != len(order) && len(order) == 1 {
+			// 2) there is exactly one order, all the sorted fields will be sorted by this order
+			for _, v := range sortby {
+				orderby := ""
+				if order[0] == "desc" {
+					orderby = "-" + v
+				} else if order[0] == "asc" {
+					orderby = v
+				} else {
+					return nil, errors.New("Error: Invalid order. Must be either [asc|desc]")
+				}
+				sortFields = append(sortFields, orderby)
+			}
+		} else if len(sortby) != len(order) && len(order) != 1 {
+			return nil, errors.New("Error: 'sortby', 'order' sizes mismatch or 'order' size is not 1")
+		}
+	} else {
+		if len(order) != 0 {
+			return nil, errors.New("Error: unused 'order' fields")
+		}
+	}
+
+	if _, err := qs.Limit(limit, offset).Values(&l, fields...); err == nil {
+		// trim unused fields
+		for _, v := range l {
+			idStr := strconv.Itoa(int(v["Id"].(int64)))
+
+			query = make(map[string]string)
+			query["photo_id"] = idStr
+			fields = []string{"user__name", "content", "CreatedAt"}
+			comments, _ := GetAllPhotoComments(query, fields, sortby, order, offset, limit)
+			v["comment"] = comments
+			if v["comment"].([]orm.Params) == nil {
+				v["comment"] = ""
+			}
+		}
+		return l, nil
+	}
+	return nil, err
 }

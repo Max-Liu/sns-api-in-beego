@@ -3,8 +3,6 @@ package models
 import (
 	"errors"
 	"fmt"
-	"reflect"
-	"strings"
 	"time"
 
 	"github.com/astaxie/beego/orm"
@@ -44,15 +42,9 @@ func GetUserRelationsById(id int) (v *UserRelations, err error) {
 // GetAllUserRelations retrieves all UserRelations matches certain condition. Returns empty list if
 // no records exist
 func GetAllUserRelations(query map[string]string, fields []string, sortby []string, order []string,
-	offset int64, limit int64) (ml []interface{}, err error) {
+	offset int64, limit int64) (ml []orm.Params, err error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(UserRelations))
-	// query k=v
-	for k, v := range query {
-		// rewrite dot-notation to Object__Attribute
-		k = strings.Replace(k, ".", "__", -1)
-		qs = qs.Filter(k, v).RelatedSel()
-	}
 	// order by:
 	var sortFields []string
 	if len(sortby) != 0 {
@@ -92,27 +84,10 @@ func GetAllUserRelations(query map[string]string, fields []string, sortby []stri
 		}
 	}
 
-	var l []UserRelations
-	qs = qs.OrderBy(sortFields...)
-	if _, err := qs.Limit(limit, offset).All(&l, fields...); err == nil {
-		if len(fields) == 0 {
-			for _, v := range l {
-				ml = append(ml, v)
-			}
-		} else {
-			// trim unused fields
-			for _, v := range l {
-				m := make(map[string]interface{})
-				val := reflect.ValueOf(v)
-				for _, fname := range fields {
-					m[fname] = val.FieldByName(fname).Interface()
-				}
-				ml = append(ml, m)
-			}
-		}
-		return ml, nil
-	}
-	return nil, err
+	var lists []orm.Params
+	qs = qs.OrderBy(sortFields...).Limit(limit, offset)
+	qs.Values(&lists, fields...)
+	return lists, err
 }
 
 // UpdateUserRelations updates UserRelations by Id and returns error if
