@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"pet/models"
 	"strconv"
 	"strings"
+	"time"
+	"web"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/validation"
 )
 
 // oprations for Articles
@@ -31,11 +33,23 @@ func (this *ArticlesController) URLMapping() {
 // @router / [post]
 func (this *ArticlesController) Post() {
 	var v models.Articles
-	json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	if id, err := models.AddArticles(&v); err == nil {
-		this.Data["json"] = map[string]int64{"id": id}
+	valid := validation.Validation{}
+	this.ParseForm(&v)
+	passed, _ := valid.Valid(&v)
+	if !passed {
+		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = err.Error()
+		v.CreatedAt = time.Now()
+		v.UpdatedAt = time.Now()
+		if id, err := models.AddArticles(&v); err == nil {
+			v.Id = int(id)
+			outPut := helper.Reponse(0, v, "创建成功")
+			this.Data["json"] = outPut
+		} else {
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
+		}
 	}
 	this.ServeJson()
 }
@@ -98,24 +112,14 @@ func (this *ArticlesController) GetAll() {
 		order = strings.Split(v, ",")
 	}
 	// query: k:v,k:v
-	if v := this.GetString("query"); v != "" {
-		for _, cond := range strings.Split(v, ",") {
-			kv := strings.Split(cond, ":")
-			if len(kv) != 2 {
-				this.Data["json"] = errors.New("Error: invalid query key/value pair")
-				this.ServeJson()
-				return
-			}
-			k, v := kv[0], kv[1]
-			query[k] = v
-		}
-	}
 
 	l, err := models.GetAllArticles(query, fields, sortby, order, offset, limit)
 	if err != nil {
-		this.Data["json"] = err.Error()
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = l
+		outPut := helper.Reponse(0, l, "")
+		this.Data["json"] = outPut
 	}
 	this.ServeJson()
 }
