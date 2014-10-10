@@ -26,13 +26,6 @@ func (this *UserRelationsController) URLMapping() {
 	this.Mapping("Delete", this.Delete)
 }
 
-var fields []string
-var sortby []string = []string{"id"}
-var order []string = []string{"desc"}
-var query map[string]string = make(map[string]string)
-var limit int64 = 10
-var offset int64 = 0
-
 // @Title Post
 // @Description create UserRelations
 // @Param	body		body 	models.UserRelations	true		"body for UserRelations content"
@@ -226,7 +219,7 @@ func (this *UserRelationsController) Delete() {
 				where := make(map[string]string)
 				where["id"] = strconv.Itoa(v.Follower.Id)
 				helper.MinusOne("users", "following", where)
-				where["id"] = strconv.Itoa(v.Following.Id)
+				where["id"] = strconv.Itoa(followingId)
 				helper.MinusOne("users", "follower", where)
 
 				outPut := helper.Reponse(0, num, "取消关注成功")
@@ -246,8 +239,8 @@ func (this *UserRelationsController) Follower() {
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = v
 	}
-
 	query["following"] = userIdStr
+	fields = []string{"CreatedAt", "following__name", "following__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
 	if err != nil {
@@ -261,16 +254,14 @@ func (this *UserRelationsController) Follower() {
 }
 
 func (this *UserRelationsController) Following() {
-
 	userSession := this.GetSession("user").(models.Users)
 	userIdStr := strconv.Itoa(userSession.Id)
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = v
 	}
-
 	query["follower"] = userIdStr
-	fields = []string{"Following"}
+	fields = []string{"CreatedAt", "following__name", "following__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
 	if err != nil {

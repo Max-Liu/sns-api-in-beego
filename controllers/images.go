@@ -70,12 +70,6 @@ func (this *ImagesController) GetOne() {
 // @Failure 403
 // @router / [get]
 func (this *ImagesController) GetAll() {
-	var fields []string
-	var sortby []string
-	var order []string
-	var query map[string]string = make(map[string]string)
-	var limit int64 = 10
-	var offset int64 = 0
 
 	// fields: col1,col2,entity.col3
 	if v := this.GetString("fields"); v != "" {

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"pet/models"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 )
 
 var uploadPhotoPath string = "static/uploads/photos"
+var err error
 
 // oprations for Photos
 type PhotosController struct {
@@ -67,7 +69,7 @@ func (this *PhotosController) Post() {
 			v.CreatedAt = time.Now()
 			v.UpdatedAt = time.Now()
 			v.Likes = 0
-			v.UserId = &currentUser
+			v.User = &currentUser
 
 			if id, err := models.AddPhotos(&v); err == nil {
 				v.Id = int(id)
@@ -89,14 +91,28 @@ func (this *PhotosController) Post() {
 // @Failure 403 :id is empty
 // @router /:id [get]
 func (this *PhotosController) GetOne() {
+
+	var data map[string]interface{} = make(map[string]interface{})
 	idStr := this.Ctx.Input.Params[":id"]
 	id, _ := strconv.Atoi(idStr)
-	v, err := models.GetPhotosById(id)
+	fields = []string{"user__name"}
+	data["photo"], err = models.GetPhotosById(id)
+
 	if err != nil {
-		this.Data["json"] = err.Error()
-	} else {
-		this.Data["json"] = v
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
+		this.ServeJson()
 	}
+	userSession := this.GetSession("user").(models.Users)
+	userId := strconv.Itoa(userSession.Id)
+
+	query["user_id"] = userId
+	fields = []string{"Content", "CreatedAt", "User__name"}
+	log.Println(fields)
+	data["comments"], err = models.GetAllPhotoComments(query, fields, sortby, order, offset, limit)
+
+	outPut := helper.Reponse(0, data, "")
+	this.Data["json"] = outPut
 	this.ServeJson()
 }
 
@@ -112,15 +128,11 @@ func (this *PhotosController) GetOne() {
 // @Failure 403
 // @router / [get]
 func (this *PhotosController) GetAll() {
-	var fields []string
-	var sortby []string
-	var order []string
-	var query map[string]string = make(map[string]string)
-	var limit int64 = 10
-	var offset int64 = 0
 
 	userIdInt := this.GetSession("user").(models.Users).Id
 	userIdStr := strconv.Itoa(userIdInt)
+
+	query := make(map[string]string)
 	query["user_id"] = userIdStr
 
 	// fields: col1,col2,entity.col3
@@ -132,17 +144,18 @@ func (this *PhotosController) GetAll() {
 		offset = v
 	}
 
-	sortby = []string{"id"}
-	order = []string{"desc"}
+	fields = []string{"Title", "Path", "Likes", "CreatedAt", "Id"}
 
-	l, err := models.GetAllPhotos(query, fields, sortby, order, offset, limit)
+	photos, err := models.GetMyPhotos(query, fields, sortby, order, offset, limit)
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
-	} else {
-		outPut := helper.Reponse(0, l, "")
-		this.Data["json"] = outPut
+		this.ServeJson()
+		return
 	}
+
+	outPut := helper.Reponse(0, photos, "")
+	this.Data["json"] = outPut
 	this.ServeJson()
 }
 

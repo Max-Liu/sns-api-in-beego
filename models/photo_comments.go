@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -12,11 +11,11 @@ import (
 
 type PhotoComments struct {
 	Id        int       `orm:"column(id);pk"`
-	PhotoId   *Photos   `orm:"column(photo_id);rel(fk)"`
-	Message   string    `orm:"column(message);null"`
+	Photo     *Photos   `orm:"column(photo_id);rel(fk)"`
+	Content   string    `orm:"column(content);null" form:"content" valid:"Required"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
-	UserId    int       `orm:"column(user_id);null"`
+	User      *Users    `orm:"column(user_id);null;rel(fk)"`
 }
 
 func init() {
@@ -45,7 +44,7 @@ func GetPhotoCommentsById(id int) (v *PhotoComments, err error) {
 // GetAllPhotoComments retrieves all PhotoComments matches certain condition. Returns empty list if
 // no records exist
 func GetAllPhotoComments(query map[string]string, fields []string, sortby []string, order []string,
-	offset int64, limit int64) (ml []interface{}, err error) {
+	offset int64, limit int64) (ml []orm.Params, err error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(PhotoComments))
 	// query k=v
@@ -93,25 +92,10 @@ func GetAllPhotoComments(query map[string]string, fields []string, sortby []stri
 		}
 	}
 
-	var l []PhotoComments
+	var l []orm.Params
 	qs = qs.OrderBy(sortFields...)
-	if _, err := qs.Limit(limit, offset).All(&l, fields...); err == nil {
-		if len(fields) == 0 {
-			for _, v := range l {
-				ml = append(ml, v)
-			}
-		} else {
-			// trim unused fields
-			for _, v := range l {
-				m := make(map[string]interface{})
-				val := reflect.ValueOf(v)
-				for _, fname := range fields {
-					m[fname] = val.FieldByName(fname).Interface()
-				}
-				ml = append(ml, m)
-			}
-		}
-		return ml, nil
+	if _, err := qs.Limit(limit, offset).Values(&l, fields...); err == nil {
+		return l, nil
 	}
 	return nil, err
 }

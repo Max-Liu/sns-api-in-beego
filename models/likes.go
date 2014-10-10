@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -14,8 +13,8 @@ type Likes struct {
 	Id        int       `orm:"column(id);pk"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
-	TargetId  *Photos   `orm:"column(target_id);rel(fk)" valid:"Required"`
-	UserId    *Users    `orm:"column(user_id);rel(fk)"`
+	Photo     *Photos   `orm:"column(target_id);rel(fk)" valid:"Required"`
+	User      *Users    `orm:"column(user_id);rel(fk)"`
 }
 
 func init() {
@@ -44,7 +43,7 @@ func GetLikesById(id int) (v *Likes, err error) {
 // GetAllLikes retrieves all Likes matches certain condition. Returns empty list if
 // no records exist
 func GetAllLikes(query map[string]string, fields []string, sortby []string, order []string,
-	offset int64, limit int64) (ml []interface{}, err error) {
+	offset int64, limit int64) (ml []orm.Params, err error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(Likes))
 	// query k=v
@@ -92,25 +91,10 @@ func GetAllLikes(query map[string]string, fields []string, sortby []string, orde
 		}
 	}
 
-	var l []Likes
+	var l []orm.Params
 	qs = qs.OrderBy(sortFields...)
-	if _, err := qs.Limit(limit, offset).All(&l, fields...); err == nil {
-		if len(fields) == 0 {
-			for _, v := range l {
-				ml = append(ml, v)
-			}
-		} else {
-			// trim unused fields
-			for _, v := range l {
-				m := make(map[string]interface{})
-				val := reflect.ValueOf(v)
-				for _, fname := range fields {
-					m[fname] = val.FieldByName(fname).Interface()
-				}
-				ml = append(ml, m)
-			}
-		}
-		return ml, nil
+	if _, err := qs.Limit(limit, offset).Values(&l, fields...); err == nil {
+		return l, nil
 	}
 	return nil, err
 }
@@ -157,7 +141,7 @@ func DeleteLikedPhoto(userId, photoId int) (num int64, err error) {
 	if err != nil {
 		return 0, err
 	}
-	v := Likes{TargetId: &target, UserId: &user}
+	v := Likes{Photo: &target, User: &user}
 
 	if err = o.Read(&v, "target_id", "user_id"); err == nil {
 		num, err = o.Delete(&v)
