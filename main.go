@@ -26,6 +26,7 @@ func init() {
 	beego.SessionOn = true
 	beego.SessionProvider = "file"
 	beego.SessionSavePath = "./tmp"
+	beego.SessionGCMaxLifetime = 60 * 60 * 60 * 24
 
 	gob.Register(models.Users{})
 
@@ -33,8 +34,9 @@ func init() {
 func main() {
 	if beego.RunMode == "dev" {
 		beego.DirectoryIndex = true
-		beego.StaticDir["/static/swagger"] = "swagger"
+		beego.SetStaticPath("/doc", "static/swagger")
 	}
+	beego.EnableDocs = true
 
 	beego.InsertFilter("/*", beego.BeforeRouter, FilterUser)
 	beego.Run()
@@ -42,10 +44,11 @@ func main() {
 
 var FilterUser = func(ctx *context.Context) {
 	user := ctx.Input.Session("user")
-
-	if user == nil && ctx.Request.URL.Path != "/v1/users/login" {
+	if user == nil && ctx.Request.URL.Path != "/v1/users/login" && ctx.Request.URL.Path[:4] != "/doc" {
 		outPut := helper.Reponse(1, nil, "请先登录")
 		b, _ := json.Marshal(outPut)
+		ctx.Output.Header("Access-Control-Allow-Origin", "*")
 		ctx.WriteString(string(b))
 	}
+	ctx.Output.Header("Access-Control-Allow-Origin", "*")
 }
