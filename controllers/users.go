@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"os"
 	"pet/models"
 	"strconv"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"github.com/astaxie/beego/validation"
 )
 
-// oprations for Users
+// 用户信息
 type UsersController struct {
 	beego.Controller
 }
@@ -23,13 +24,16 @@ func (this *UsersController) URLMapping() {
 	this.Mapping("Delete", this.Delete)
 }
 
-// @Title Post
-// @Description create Users
-// @Param	body		body 	models.Users	true		"body for Users content"
+// @Title 注册
+// @Description 用户注册
+// @Param	email		form 	String	true		"注册邮箱"
+// @Param	phone		form 	String	true		"注册手机"
+// @Param	name		form 	String	true		"用户名"
+// @Param	password	form 	String	true		"密码"
 // @Success 200 {int} models.Users.Id
 // @Failure 403 body is empty
-// @router / [post]
-func (this *UsersController) Post() {
+// @router /register [post]
+func (this *UsersController) Register() {
 	var v models.Users
 	valid := validation.Validation{}
 	this.ParseForm(&v)
@@ -53,12 +57,14 @@ func (this *UsersController) Post() {
 	this.ServeJson()
 }
 
-// @Title Update
-// @Description update the Users
-// @Param	id		path 	string	true		"The id you want to update"
-// @Param	body		body 	models.Users	true		"body for Users content"
-// @Success 200 {object} models.Users
-// @Failure 403 :id is not int
+// @Title 更新个人信息
+// @Description 更新个人信息
+// @Param	id			path 	string	true		"用户ID"
+// @Param	gender		form	Int		true		"用户性别"
+// @Param	birthday	form	String	true		"生日"
+// @Param	head		form	File	true		"头像图片"
+// @Success 200 {int} models.Users.Id
+// @Failure 403 body is empty
 // @router /:id [put]
 func (this *UsersController) Put() {
 
@@ -66,27 +72,56 @@ func (this *UsersController) Put() {
 	id, _ := strconv.Atoi(idStr)
 
 	userSession := this.GetSession("user")
+	user := userSession.(models.Users)
 
 	if userSession.(models.Users).Id == id {
-		v := models.Users{Id: id}
-		this.ParseForm(&v)
+		var v models.Users
 		valid := validation.Validation{}
-		passed, _ := valid.Valid(&v)
+		v = user
 
+		passed, _ := valid.Valid(&v)
 		if !passed {
 			outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
 			this.Data["json"] = outPut
 		} else {
-			if err := models.UpdateUsersById(&v); err == nil {
-				outPut := helper.Reponse(0, v, "更新成功")
-				this.Data["json"] = outPut
-			} else {
+
+			v, _ := models.GetUsersById(id)
+			v.Birthday = this.GetString("birthday")
+			genderStr := this.GetString("gender")
+			gender, _ := strconv.Atoi(genderStr)
+			v.Gender = gender
+
+			todayDateDir := "/" + helper.GetTodayDate()
+			if _, err := os.Stat(uploadPhotoPath + todayDateDir); os.IsNotExist(err) {
+				os.Mkdir(uploadPhotoPath+todayDateDir, 0777)
+			}
+			currentUser := this.GetSession("user").(models.Users)
+			photoName := helper.GetGuid(currentUser.Id)
+			dateSubdir := "/" + string(photoName[0]) + string(photoName[1])
+
+			if _, err := os.Stat(uploadPhotoPath + todayDateDir + dateSubdir); os.IsNotExist(err) {
+				os.Mkdir(uploadPhotoPath+todayDateDir+dateSubdir, 0777)
+			}
+
+			imagePath := uploadPhotoPath + todayDateDir + dateSubdir + "/" + photoName + ".jpg"
+			err := this.SaveToFile("head", imagePath)
+
+			if err != nil {
 				outPut := helper.Reponse(1, nil, err.Error())
 				this.Data["json"] = outPut
+			} else {
+				v.Head = imagePath
+				if err := models.UpdateUsersById(v); err == nil {
+					outPut := helper.Reponse(0, v, "更新成功")
+					this.Data["json"] = outPut
+				} else {
+					outPut := helper.Reponse(1, nil, err.Error())
+					this.Data["json"] = outPut
+				}
 			}
 		}
 	} else {
-		outPut := helper.Reponse(1, nil, "no access")
+		outPut := helper.Reponse(1, nil, "没有权限更新其它用户")
 		this.Data["json"] = outPut
 	}
 
@@ -100,9 +135,9 @@ func (this *UsersController) Put() {
 //this.ServeJson()
 //}
 
-// @Title Get
-// @Description get Users by id
-// @Param	id		path 	string	true		"The key for staticblock"
+// @Title 获取单个用户信息
+// @Description 获取单个用户信息
+// @Param	id		path 	string	true		"用户ID"
 // @Success 200 {object} models.Users
 // @Failure 403 :id is empty
 // @router /:id [get]
@@ -129,6 +164,7 @@ func (this *UsersController) GetOne() {
 // @Success 200 {object} models.Users
 // @Failure 403
 // @router / [get]
+
 func (this *UsersController) GetAll() {
 	user := this.GetSession("user")
 	outPut := helper.Reponse(0, user, "")
@@ -189,27 +225,35 @@ func (this *UsersController) GetAll() {
 // @Success 200 {string} delete success!
 // @Failure 403 id is empty
 // @router /:id [delete]
+
 func (this *UsersController) Delete() {
-	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
-	if err := models.DeleteUsers(id); err == nil {
-		this.Data["json"] = "OK"
-	} else {
-		this.Data["json"] = err.Error()
-	}
-	this.ServeJson()
+	//idStr := this.Ctx.Input.Params[":id"]
+	//id, _ := strconv.Atoi(idStr)
+	//if err := models.DeleteUsers(id); err == nil {
+	//this.Data["json"] = "OK"
+	//} else {
+	//this.Data["json"] = err.Error()
+	//}
+	//this.ServeJson()
 }
 
+// @Title 登陆
+// @Description 登陆
+// @Param	info		query	String	true		"用户名或手机或邮箱"
+// @Param	password	query	String	true		"密码"
+// @Success 200 {int} models.Users.Id
+// @Failure 403 body is empty
+// @router /login
 func (this *UsersController) Login() {
 	if user := this.GetSession("user"); user != nil {
 		outPut := helper.Reponse(0, &user, "登陆成功")
 		this.Data["json"] = outPut
 	} else {
-
-		email := this.GetString("email")
+		info := this.GetString("info")
 		password := this.GetString("password")
-		phone := this.GetString("phone")
-		name := this.GetString("name")
+
+		email, phone, name := info, info, info
+
 		user, err := models.GetUserByLoginfo(password, email, phone, name)
 
 		if err == nil {
@@ -224,6 +268,11 @@ func (this *UsersController) Login() {
 	this.ServeJson()
 }
 
+// @Title 注销
+// @Description 注销
+// @Success 200 {int} models.Users.Id
+// @Failure 403 body is empty
+// @router /logout
 func (this *UsersController) Logout() {
 	this.DelSession("user")
 	outPut := helper.Reponse(0, nil, "登出成功")
