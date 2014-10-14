@@ -1,11 +1,8 @@
 package controllers
 
 import (
-	"encoding/json"
-	"errors"
 	"pet/models"
 	"strconv"
-	"strings"
 	"time"
 	"web"
 
@@ -13,7 +10,7 @@ import (
 	"github.com/astaxie/beego/validation"
 )
 
-// oprations for UserRelations
+// 用户关系相关
 type UserRelationsController struct {
 	beego.Controller
 }
@@ -26,15 +23,14 @@ func (this *UserRelationsController) URLMapping() {
 	this.Mapping("Delete", this.Delete)
 }
 
-// @Title Post
-// @Description create UserRelations
-// @Param	body		body 	models.UserRelations	true		"body for UserRelations content"
+// @Title 关注
+// @Description 关注某用户
+// @Param	following		form 	String	true		"所关注用户的Id"
 // @Success 200 {int} models.UserRelations.Id
 // @Failure 403 body is empty
 // @router / [post]
 func (this *UserRelationsController) Post() {
 	var v models.UserRelations
-	var err error
 
 	valid := validation.Validation{}
 	this.ParseForm(&v)
@@ -98,16 +94,17 @@ func (this *UserRelationsController) Post() {
 // @Success 200 {object} models.UserRelations
 // @Failure 403 :id is empty
 // @router /:id [get]
+
 func (this *UserRelationsController) GetOne() {
-	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
-	v, err := models.GetUserRelationsById(id)
-	if err != nil {
-		this.Data["json"] = err.Error()
-	} else {
-		this.Data["json"] = v
-	}
-	this.ServeJson()
+	//idStr := this.Ctx.Input.Params[":id"]
+	//id, _ := strconv.Atoi(idStr)
+	//v, err := models.GetUserRelationsById(id)
+	//if err != nil {
+	//this.Data["json"] = err.Error()
+	//} else {
+	//this.Data["json"] = v
+	//}
+	//this.ServeJson()
 }
 
 // @Title Get All
@@ -121,49 +118,50 @@ func (this *UserRelationsController) GetOne() {
 // @Success 200 {object} models.UserRelations
 // @Failure 403
 // @router / [get]
+
 func (this *UserRelationsController) GetAll() {
 
-	// fields: col1,col2,entity.col3
-	if v := this.GetString("fields"); v != "" {
-		fields = strings.Split(v, ",")
-	}
-	// limit: 10 (default is 10)
-	if v, err := this.GetInt("limit"); err == nil {
-		limit = v
-	}
-	// offset: 0 (default is 0)
-	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
-	}
-	// sortby: col1,col2
-	if v := this.GetString("sortby"); v != "" {
-		sortby = strings.Split(v, ",")
-	}
-	// order: desc,asc
-	if v := this.GetString("order"); v != "" {
-		order = strings.Split(v, ",")
-	}
-	// query: k:v,k:v
-	if v := this.GetString("query"); v != "" {
-		for _, cond := range strings.Split(v, ",") {
-			kv := strings.Split(cond, ":")
-			if len(kv) != 2 {
-				this.Data["json"] = errors.New("Error: invalid query key/value pair")
-				this.ServeJson()
-				return
-			}
-			k, v := kv[0], kv[1]
-			query[k] = v
-		}
-	}
+	//// fields: col1,col2,entity.col3
+	//if v := this.GetString("fields"); v != "" {
+	//fields = strings.Split(v, ",")
+	//}
+	//// limit: 10 (default is 10)
+	//if v, err := this.GetInt("limit"); err == nil {
+	//limit = v
+	//}
+	//// offset: 0 (default is 0)
+	//if v, err := this.GetInt("offset"); err == nil {
+	//offset = v
+	//}
+	//// sortby: col1,col2
+	//if v := this.GetString("sortby"); v != "" {
+	//sortby = strings.Split(v, ",")
+	//}
+	//// order: desc,asc
+	//if v := this.GetString("order"); v != "" {
+	//order = strings.Split(v, ",")
+	//}
+	//// query: k:v,k:v
+	//if v := this.GetString("query"); v != "" {
+	//for _, cond := range strings.Split(v, ",") {
+	//kv := strings.Split(cond, ":")
+	//if len(kv) != 2 {
+	//this.Data["json"] = errors.New("Error: invalid query key/value pair")
+	//this.ServeJson()
+	//return
+	//}
+	//k, v := kv[0], kv[1]
+	//query[k] = v
+	//}
+	//}
 
-	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
-	if err != nil {
-		this.Data["json"] = err.Error()
-	} else {
-		this.Data["json"] = l
-	}
-	this.ServeJson()
+	//l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
+	//if err != nil {
+	//this.Data["json"] = err.Error()
+	//} else {
+	//this.Data["json"] = l
+	//}
+	//this.ServeJson()
 }
 
 // @Title Update
@@ -173,22 +171,23 @@ func (this *UserRelationsController) GetAll() {
 // @Success 200 {object} models.UserRelations
 // @Failure 403 :id is not int
 // @router /:id [put]
+
 func (this *UserRelationsController) Put() {
-	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
-	v := models.UserRelations{Id: id}
-	json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	if err := models.UpdateUserRelationsById(&v); err == nil {
-		this.Data["json"] = "OK"
-	} else {
-		this.Data["json"] = err.Error()
-	}
-	this.ServeJson()
+	//idStr := this.Ctx.Input.Params[":id"]
+	//id, _ := strconv.Atoi(idStr)
+	//v := models.UserRelations{Id: id}
+	//json.Unmarshal(this.Ctx.Input.RequestBody, &v)
+	//if err := models.UpdateUserRelationsById(&v); err == nil {
+	//this.Data["json"] = "OK"
+	//} else {
+	//this.Data["json"] = err.Error()
+	//}
+	//this.ServeJson()
 }
 
-// @Title Delete
-// @Description delete the UserRelations
-// @Param	id		path 	string	true		"The id you want to delete"
+// @Title 取消关注
+// @Description 取消关注
+// @Param	id		path 	string	true		"所要取消关注的用户ID"
 // @Success 200 {string} delete success!
 // @Failure 403 id is empty
 // @router /:id [delete]
@@ -232,6 +231,13 @@ func (this *UserRelationsController) Delete() {
 	}
 	this.ServeJson()
 }
+
+// @Title 粉丝列表
+// @Description 获取粉丝列表
+// @Param	offset	query	string	false	"结果索引"
+// @Success 200 {object} models.UserRelations
+// @Failure 403
+// @router /follower [get]
 func (this *UserRelationsController) Follower() {
 	userSession := this.GetSession("user").(models.Users)
 	userIdStr := strconv.Itoa(userSession.Id)
@@ -253,6 +259,12 @@ func (this *UserRelationsController) Follower() {
 	this.ServeJson()
 }
 
+// @Title 关注列表
+// @Description 获取关注列表
+// @Param	offset	query	string	false	"结果索引"
+// @Success 200 {object} models.UserRelations
+// @Failure 403
+// @router /following [get]
 func (this *UserRelationsController) Following() {
 	userSession := this.GetSession("user").(models.Users)
 	userIdStr := strconv.Itoa(userSession.Id)
@@ -260,6 +272,7 @@ func (this *UserRelationsController) Following() {
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = v
 	}
+	query := make(map[string]string)
 	query["follower"] = userIdStr
 	fields = []string{"CreatedAt", "following__name", "following__id"}
 
