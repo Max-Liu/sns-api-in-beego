@@ -204,6 +204,7 @@ func GetMyPhotos(query map[string]string, fields []string, sortby []string, orde
 			query = make(map[string]string)
 			query["photo_id"] = idStr
 			fields = []string{"user__name", "content", "CreatedAt"}
+			sortby = []string{"id"}
 			comments, _ := GetAllPhotoComments(query, fields, sortby, order, offset, limit)
 			v["comment"] = comments
 			if v["comment"].([]orm.Params) == nil {

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"pet/models"
@@ -17,7 +16,7 @@ import (
 var uploadPhotoPath string = "static/uploads/photos"
 var err error
 
-// oprations for Photos
+// 用户照片相关
 type PhotosController struct {
 	beego.Controller
 }
@@ -30,9 +29,10 @@ func (this *PhotosController) URLMapping() {
 	this.Mapping("Delete", this.Delete)
 }
 
-// @Title Post
-// @Description create Photos
-// @Param	body		body 	models.Photos	true		"body for Photos content"
+// @Title 发布照片
+// @Description 发布照片
+// @Param	photo		Form 	File	true		"用户发布的照片"
+// @Param	title		form 	String	true		"照片描述"
 // @Success 200 {int} models.Photos.Id
 // @Failure 403 body is empty
 // @router / [post]
@@ -84,9 +84,9 @@ func (this *PhotosController) Post() {
 	this.ServeJson()
 }
 
-// @Title Get
-// @Description get Photos by id
-// @Param	id		path 	string	true		"The key for staticblock"
+// @Title 获取照片详情
+// @Description 获取某张照片详情
+// @Param	id		path 	string	true		"照片详情"
 // @Success 200 {object} models.Photos
 // @Failure 403 :id is empty
 // @router /:id [get]
@@ -116,14 +116,11 @@ func (this *PhotosController) GetOne() {
 	this.ServeJson()
 }
 
-// @Title Get All
-// @Description get Photos
-// @Param	query	query	string	false	"Filter. e.g. col1:v1,col2:v2 ..."
-// @Param	fields	query	string	false	"Fields returned. e.g. col1,col2 ..."
-// @Param	sortby	query	string	false	"Sorted-by fields. e.g. col1,col2 ..."
-// @Param	order	query	string	false	"Order corresponding to each sortby field, if single value, apply to all sortby fields. e.g. desc,asc ..."
-// @Param	limit	query	string	false	"Limit the size of result set. Must be an integer"
-// @Param	offset	query	string	false	"Start position of result set. Must be an integer"
+// @Title 获取照片
+// @Description 获取照片列表
+// @Param	sortby	query	string	false	"获取最新sortby=created_at;获取最热sortby=likes。默认获取最新"
+// @Param	offset	query	string	false	"结果索引"
+// @Param	myphoto	query	string	false	"为1是获取我的照片列表,默认获取全部"
 // @Success 200 {object} models.Photos
 // @Failure 403
 // @router / [get]
@@ -133,20 +130,23 @@ func (this *PhotosController) GetAll() {
 	userIdStr := strconv.Itoa(userIdInt)
 
 	query := make(map[string]string)
-	query["user_id"] = userIdStr
 
-	// fields: col1,col2,entity.col3
-	if v := this.GetString("fields"); v != "" {
-		fields = strings.Split(v, ",")
+	if v := this.GetString("myphoto"); err == nil {
+		if v == "1" {
+			query["user_id"] = userIdStr
+		}
 	}
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = v
 	}
 
+	if v := this.GetString("sortby"); v != "" {
+		sortby = strings.Split(v, ",")
+	}
 	fields = []string{"Title", "Path", "Likes", "CreatedAt", "Id"}
 
-	photos, err := models.GetMyPhotos(query, fields, sortby, order, offset, limit)
+	photos, err := models.GetAllPhotos(query, fields, sortby, order, offset, limit)
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
@@ -166,17 +166,18 @@ func (this *PhotosController) GetAll() {
 // @Success 200 {object} models.Photos
 // @Failure 403 :id is not int
 // @router /:id [put]
+
 func (this *PhotosController) Put() {
-	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
-	v := models.Photos{Id: id}
-	json.Unmarshal(this.Ctx.Input.RequestBody, &v)
-	if err := models.UpdatePhotosById(&v); err == nil {
-		this.Data["json"] = "OK"
-	} else {
-		this.Data["json"] = err.Error()
-	}
-	this.ServeJson()
+	//idStr := this.Ctx.Input.Params[":id"]
+	//id, _ := strconv.Atoi(idStr)
+	//v := models.Photos{Id: id}
+	//json.Unmarshal(this.Ctx.Input.RequestBody, &v)
+	//if err := models.UpdatePhotosById(&v); err == nil {
+	//this.Data["json"] = "OK"
+	//} else {
+	//this.Data["json"] = err.Error()
+	//}
+	//this.ServeJson()
 }
 
 // @Title Delete
@@ -185,13 +186,14 @@ func (this *PhotosController) Put() {
 // @Success 200 {string} delete success!
 // @Failure 403 id is empty
 // @router /:id [delete]
+
 func (this *PhotosController) Delete() {
-	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
-	if err := models.DeletePhotos(id); err == nil {
-		this.Data["json"] = "OK"
-	} else {
-		this.Data["json"] = err.Error()
-	}
-	this.ServeJson()
+	//idStr := this.Ctx.Input.Params[":id"]
+	//id, _ := strconv.Atoi(idStr)
+	//if err := models.DeletePhotos(id); err == nil {
+	//this.Data["json"] = "OK"
+	//} else {
+	//this.Data["json"] = err.Error()
+	//}
+	//this.ServeJson()
 }
