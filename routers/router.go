@@ -1,10 +1,5 @@
 // @APIVersion 1.0.0
-// @Title beego Test API
-// @Description beego has a very cool tools to autogenerate documents for your API
-// @Contact astaxie@gmail.com
-// @TermsOfServiceUrl http://beego.me/
-// @License Apache 2.0
-// @LicenseUrl http://www.apache.org/licenses/LICENSE-2.0.html
+// @Title Pet Rest API
 package routers
 
 import (
@@ -19,12 +14,6 @@ func init() {
 		beego.NSNamespace("/articles",
 			beego.NSInclude(
 				&controllers.ArticlesController{},
-			),
-		),
-
-		beego.NSNamespace("/images",
-			beego.NSInclude(
-				&controllers.ImagesController{},
 			),
 		),
 
@@ -63,6 +52,8 @@ func init() {
 		beego.NSNamespace("/users",
 			beego.NSRouter("/login", &controllers.UsersController{}, "get:Login"),
 			beego.NSRouter("/logout", &controllers.UsersController{}, "get:Logout"),
+			beego.NSRouter("/register", &controllers.UsersController{}, "post:Register"),
+
 			beego.NSInclude(
 				&controllers.UsersController{},
 			),
