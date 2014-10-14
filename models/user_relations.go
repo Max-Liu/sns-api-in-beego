@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/astaxie/beego/orm"
@@ -45,6 +46,11 @@ func GetAllUserRelations(query map[string]string, fields []string, sortby []stri
 	offset int64, limit int64) (ml []orm.Params, err error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(UserRelations))
+	for k, v := range query {
+		// rewrite dot-notation to Object__Attribute
+		k = strings.Replace(k, ".", "__", -1)
+		qs = qs.Filter(k, v)
+	}
 	// order by:
 	var sortFields []string
 	if len(sortby) != 0 {
