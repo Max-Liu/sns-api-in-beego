@@ -8,6 +8,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	"github.com/beego/redigo/redis"
 )
 
 // 用户关系相关
@@ -69,6 +70,25 @@ func (this *UserRelationsController) Post() {
 			v.UpdatedAt = time.Now()
 
 			if id, err := models.AddUserRelations(&v); err == nil {
+				//add relations in redis
+				redisAddress, _ := beego.GetConfig("string", "redisServer")
+				c, err := redis.Dial("tcp", redisAddress.(string))
+				defer c.Close()
+				if err != nil {
+					beego.Error(err.Error())
+				}
+				followerIdStr := strconv.Itoa(follower.Id)
+				result, err := c.Do("ZADD", "following:"+followerIdStr, time.Now().Unix(), followingIdStr)
+				beego.Debug(result)
+				if err != nil {
+					beego.Error(err.Error())
+				}
+				result, err = c.Do("ZADD", "follower:"+followingIdStr, time.Now().Unix(), followerIdStr)
+				beego.Debug(result)
+				if err != nil {
+					beego.Error(err.Error())
+				}
+
 				v.Id = int(id)
 				where := make(map[string]string)
 				where["id"] = strconv.Itoa(v.Follower.Id)
@@ -215,6 +235,26 @@ func (this *UserRelationsController) Delete() {
 			v.UpdatedAt = time.Now()
 
 			if num, err := models.DeleteUserRelationsByUsers(v.Follower.Id, followingId); err == nil {
+
+				//delete relations in redis
+				redisAddress, _ := beego.GetConfig("string", "redisServer")
+				c, err := redis.Dial("tcp", redisAddress.(string))
+				defer c.Close()
+				if err != nil {
+					beego.Error(err.Error())
+				}
+				followerIdStr := strconv.Itoa(follower.Id)
+				result, err := c.Do("ZREM", "following:"+followerIdStr, followingIdStr)
+				beego.Debug(result)
+				if err != nil {
+					beego.Error(err.Error())
+				}
+				result, err = c.Do("ZREM", "follower:"+followingIdStr, followerIdStr)
+				beego.Debug(result)
+				if err != nil {
+					beego.Error(err.Error())
+				}
+
 				where := make(map[string]string)
 				where["id"] = strconv.Itoa(v.Follower.Id)
 				helper.MinusOne("users", "following", where)
@@ -246,7 +286,7 @@ func (this *UserRelationsController) Follower() {
 		offset = v
 	}
 	query["following"] = userIdStr
-	fields = []string{"CreatedAt", "following__name", "following__id"}
+	fields = []string{"CreatedAt", "follower__name", "follower__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
 	if err != nil {
@@ -272,6 +312,7 @@ func (this *UserRelationsController) Following() {
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = v
 	}
+
 	query := make(map[string]string)
 	query["follower"] = userIdStr
 	fields = []string{"CreatedAt", "following__name", "following__id"}
