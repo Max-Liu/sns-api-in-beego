@@ -8,11 +8,11 @@ import (
 	_ "pet/routers"
 	"web"
 
+	_ "beego/session/redis"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/astaxie/beego/session/mysql"
-	_ "github.com/garyburd/redigo/redis"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -23,11 +23,6 @@ func init() {
 	orm.RegisterDataBase("default", "mysql", dbAddress)
 	orm.Debug = true
 	beego.SetLevel(beego.LevelInformational)
-	beego.SessionOn = true
-	beego.SessionProvider = "file"
-	beego.SessionSavePath = "./tmp"
-	beego.SessionGCMaxLifetime = 60 * 60 * 60 * 24
-
 	gob.Register(models.Users{})
 
 }
@@ -37,7 +32,6 @@ func main() {
 		beego.SetStaticPath("/doc", "static/swagger")
 	}
 	beego.EnableDocs = true
-
 	beego.InsertFilter("/*", beego.BeforeRouter, FilterUser)
 	beego.Run()
 }
