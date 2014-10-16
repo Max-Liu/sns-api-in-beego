@@ -11,13 +11,12 @@ import (
 )
 
 type Articles struct {
-	Id           int       `orm:"column(id);pk"`
-	Title        string    `orm:"column(title);size(45);null" form:"title" valid:"Required"`
-	Content      string    `orm:"column(content);null" form:"title" valid:"Required" `
-	CreatedAt    time.Time `orm:"column(created_at);type(timestamp);null"`
-	UpdatedAt    time.Time `orm:"column(updated_at);type(timestamp);null"`
-	TitleImage   string    `orm:"column(title_image);null"`
-	ContentImage string    `orm:"column(content_image);null"`
+	Id         int       `orm:"column(id);pk"`
+	Title      string    `orm:"column(title);size(45);null" form:"title" valid:"Required"`
+	Content    string    `orm:"column(content);null" form:"title" valid:"Required" `
+	CreatedAt  time.Time `orm:"column(created_at);type(timestamp);null"`
+	UpdatedAt  time.Time `orm:"column(updated_at);type(timestamp);null"`
+	TitleImage string    `orm:"column(title_image);null"`
 }
 
 func init() {
