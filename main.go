@@ -22,7 +22,8 @@ func init() {
 	orm.RegisterDriver("mysql", orm.DR_MySQL)
 	orm.RegisterDataBase("default", "mysql", dbAddress)
 	orm.Debug = true
-	beego.SetLevel(beego.LevelInformational)
+	beego.SetLevel(beego.LevelDebug)
+	beego.SetLogFuncCall(true)
 	gob.Register(models.Users{})
 
 }
