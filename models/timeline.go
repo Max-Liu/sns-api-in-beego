@@ -4,12 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
-
-	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	"github.com/beego/redigo/redis"
 )
 
 type Timeline struct {
@@ -146,37 +142,6 @@ func DeleteTimeline(id int) (err error) {
 		}
 	}
 	return
-}
-
-func GetFollowingPhotos(userId int, offset int64) (interface{}, error) {
-	redisAddress, _ := beego.GetConfig("string", "redisServer")
-	c, err := redis.Dial("tcp", redisAddress.(string))
-	defer c.Close()
-	if err != nil {
-		beego.Error(err.Error())
-	}
-	userIdStr := strconv.Itoa(userId)
-	result, err := c.Do("LRANGE", "ptm:"+userIdStr, offset, offset+99)
-
-	if err != nil {
-		beego.Error(err.Error())
-	}
-
-	if reflect.TypeOf(result).String() == "[]interface {}" {
-		if reflect.ValueOf(result).Len() == 0 {
-			return result, nil
-		}
-	}
-
-	var photoIdList []string
-	for _, photoId := range result.([]interface{}) {
-		photoIdList = append(photoIdList, string(photoId.([]uint8)))
-	}
-	o := orm.NewOrm()
-	qs := o.QueryTable("photos")
-	var lists []orm.Params
-	qs.Filter("id__in", photoIdList).Values(&lists)
-	return lists, err
 }
 
 func DoAction(userId, pUserId, targetId, typeId int) {

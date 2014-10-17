@@ -30,14 +30,9 @@ func init() {
 		),
 
 		beego.NSNamespace("/photos",
+			beego.NSRouter("/following", &controllers.PhotosController{}, "get:GetFollowingPhotosTimeline"),
 			beego.NSInclude(
 				&controllers.PhotosController{},
-			),
-		),
-
-		beego.NSNamespace("/timeline",
-			beego.NSInclude(
-				&controllers.TimelineController{},
 			),
 		),
 

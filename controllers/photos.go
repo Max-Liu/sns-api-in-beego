@@ -225,3 +225,30 @@ func PushPhotoToFollowerTimelime(userId, photoId int) {
 		}
 	}
 }
+
+// @Title 获取关注的人照片timeline
+// @Description 获取关注的人照片timeline
+// @Param	offset	query	string	false	"结果列表索引"
+// @Success 200 {object} models.Timeline
+// @Failure 403
+// @router /timeline/following [get]
+func (this *PhotosController) GetFollowingPhotosTimeline() {
+
+	if v, err := this.GetInt("offset"); err == nil {
+		offset = v
+	}
+
+	userSession := this.GetSession("user").(models.Users)
+	userId := userSession.Id
+
+	l, err := models.GetFollowingPhotos(userId, offset)
+
+	if err != nil {
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
+	} else {
+		outPut := helper.Reponse(0, l, "")
+		this.Data["json"] = outPut
+	}
+	this.ServeJson()
+}
