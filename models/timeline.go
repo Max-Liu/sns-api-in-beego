@@ -4,17 +4,21 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"github.com/beego/redigo/redis"
 )
 
 type Timeline struct {
-	Id       int  `orm:"column(id);pk"`
-	UserId   int  `orm:"column(user_id);null"`
-	PUserId  int  `orm:"column(p_user_id);null"`
-	TargetId int  `orm:"column(target_id);null"`
-	Tpye     int8 `orm:"column(tpye);null"`
+	Id       int `orm:"column(id);pk"`
+	UserId   int `orm:"column(user_id);null"`
+	PUserId  int `orm:"column(p_user_id);null"`
+	TargetId int `orm:"column(target_id);null"`
+	Type     int `orm:"column(type);null"` //1:likes,2:comment,3:photos,4:following
+	Read     int `orm:column(read)`
 }
 
 func init() {
@@ -142,4 +146,44 @@ func DeleteTimeline(id int) (err error) {
 		}
 	}
 	return
+}
+
+func GetFollowingPhotos(userId int, offset int64) (interface{}, error) {
+	redisAddress, _ := beego.GetConfig("string", "redisServer")
+	c, err := redis.Dial("tcp", redisAddress.(string))
+	defer c.Close()
+	if err != nil {
+		beego.Error(err.Error())
+	}
+	userIdStr := strconv.Itoa(userId)
+	result, err := c.Do("LRANGE", "ptm:"+userIdStr, offset, offset+99)
+
+	if err != nil {
+		beego.Error(err.Error())
+	}
+
+	if reflect.TypeOf(result).String() == "[]interface {}" {
+		if reflect.ValueOf(result).Len() == 0 {
+			return result, nil
+		}
+	}
+
+	var photoIdList []string
+	for _, photoId := range result.([]interface{}) {
+		photoIdList = append(photoIdList, string(photoId.([]uint8)))
+	}
+	o := orm.NewOrm()
+	qs := o.QueryTable("photos")
+	var lists []orm.Params
+	qs.Filter("id__in", photoIdList).Values(&lists)
+	return lists, err
+}
+
+func DoAction(userId, pUserId, targetId, typeId int) {
+	var m *Timeline
+	m.UserId = userId
+	m.PUserId = pUserId
+	m.TargetId = targetId
+	m.Type = typeId
+	AddTimeline(m)
 }

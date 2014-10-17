@@ -11,6 +11,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	"github.com/beego/redigo/redis"
 )
 
 var uploadPhotoPath string = "static/uploads/photos"
@@ -63,7 +64,6 @@ func (this *PhotosController) Post() {
 		if err != nil {
 			outPut := helper.Reponse(1, nil, err.Error())
 			this.Data["json"] = outPut
-
 		} else {
 			v.Path = imagePath
 			v.CreatedAt = time.Now()
@@ -72,6 +72,7 @@ func (this *PhotosController) Post() {
 			v.User = &currentUser
 
 			if id, err := models.AddPhotos(&v); err == nil {
+				PushPhotoToFollowerTimelime(currentUser.Id, int(id))
 				v.Id = int(id)
 				outPut := helper.Reponse(0, v, "创建成功")
 				this.Data["json"] = outPut
@@ -196,4 +197,31 @@ func (this *PhotosController) Delete() {
 	//this.Data["json"] = err.Error()
 	//}
 	//this.ServeJson()
+}
+
+func PushPhotoToFollowerTimelime(userId, photoId int) {
+	redisAddress, _ := beego.GetConfig("string", "redisServer")
+	c, err := redis.Dial("tcp", redisAddress.(string))
+	defer c.Close()
+	if err != nil {
+		beego.Error(err.Error())
+	}
+	userIdStr := strconv.Itoa(userId)
+	result, err := c.Do("ZRANGE", "follower:"+userIdStr, 0, -1)
+	for _, userId := range result.([]interface{}) {
+		//photo time line
+		userIdStr := string(userId.([]uint8))
+		result, err := c.Do("LPUSH", "ptm:"+userIdStr, photoId)
+		beego.Debug(result)
+		if err != nil {
+			beego.Error(err.Error())
+		}
+		//display the newest 100 photos
+		result, err = c.Do("LTRIM", "ptm:"+userIdStr, 0, 99)
+
+		beego.Debug(result)
+		if err != nil {
+			beego.Error(err.Error())
+		}
+	}
 }
