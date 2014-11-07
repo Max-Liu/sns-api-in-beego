@@ -218,7 +218,7 @@ func GetMyPhotos(query map[string]string, fields []string, sortby []string, orde
 	return nil, err
 }
 func GetFollowingPhotos(userId int, offset int64) (interface{}, error) {
-	redisAddress, _ := beego.GetConfig("string", "redisServer")
+	redisAddress, _ := beego.Config("string", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {

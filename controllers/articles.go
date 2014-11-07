@@ -104,7 +104,7 @@ func (this *ArticlesController) GetOne() {
 func (this *ArticlesController) GetAll() {
 
 	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
+		offset = int64(v)
 	}
 	l, err := models.GetAllArticles(query, fields, sortby, order, offset, limit)
 	if err != nil {

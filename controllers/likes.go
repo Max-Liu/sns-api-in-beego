@@ -96,7 +96,7 @@ func (this *LikesController) GetOne() {
 func (this *LikesController) GetAll() {
 
 	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
+		offset = int64(v)
 	}
 
 	userSession := this.GetSession("user").(models.Users)

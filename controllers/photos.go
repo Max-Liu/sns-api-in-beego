@@ -139,7 +139,7 @@ func (this *PhotosController) GetAll() {
 	}
 
 	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
+		offset = int64(v)
 	}
 
 	if v := this.GetString("sortby"); v != "" {
@@ -200,7 +200,7 @@ func (this *PhotosController) Delete() {
 }
 
 func PushPhotoToFollowerTimelime(userId, photoId int) {
-	redisAddress, _ := beego.GetConfig("string", "redisServer")
+	redisAddress, _ := beego.Config("string", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {
@@ -235,7 +235,7 @@ func PushPhotoToFollowerTimelime(userId, photoId int) {
 func (this *PhotosController) GetFollowingPhotosTimeline() {
 
 	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
+		offset = int64(v)
 	}
 
 	userSession := this.GetSession("user").(models.Users)

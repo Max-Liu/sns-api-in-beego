@@ -8,11 +8,11 @@ import (
 	_ "pet/routers"
 	"web"
 
-	_ "beego/session/redis"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/astaxie/beego/session/mysql"
+	_ "github.com/astaxie/beego/session/redis"
 	_ "github.com/go-sql-driver/mysql"
 )
 

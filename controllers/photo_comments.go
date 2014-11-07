@@ -96,7 +96,7 @@ func (this *PhotoCommentsController) GetOne() {
 func (this *PhotoCommentsController) GetAll() {
 
 	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
+		offset = int64(v)
 	}
 	photoId := this.GetString("photo_id")
 

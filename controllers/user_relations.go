@@ -71,7 +71,7 @@ func (this *UserRelationsController) Post() {
 
 			if id, err := models.AddUserRelations(&v); err == nil {
 				//add relations in redis
-				redisAddress, _ := beego.GetConfig("string", "redisServer")
+				redisAddress, _ := beego.Config("string", "redisServer", "")
 				c, err := redis.Dial("tcp", redisAddress.(string))
 				defer c.Close()
 				if err != nil {
@@ -237,7 +237,7 @@ func (this *UserRelationsController) Delete() {
 			if num, err := models.DeleteUserRelationsByUsers(v.Follower.Id, followingId); err == nil {
 
 				//delete relations in redis
-				redisAddress, _ := beego.GetConfig("string", "redisServer")
+				redisAddress, _ := beego.Config("string", "redisServer", "")
 				c, err := redis.Dial("tcp", redisAddress.(string))
 				defer c.Close()
 				if err != nil {
@@ -283,7 +283,7 @@ func (this *UserRelationsController) Follower() {
 	userIdStr := strconv.Itoa(userSession.Id)
 
 	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
+		offset = int64(v)
 	}
 	query["following"] = userIdStr
 	fields = []string{"CreatedAt", "follower__name", "follower__id"}
@@ -310,7 +310,7 @@ func (this *UserRelationsController) Following() {
 	userIdStr := strconv.Itoa(userSession.Id)
 
 	if v, err := this.GetInt("offset"); err == nil {
-		offset = v
+		offset = int64(v)
 	}
 
 	query := make(map[string]string)
