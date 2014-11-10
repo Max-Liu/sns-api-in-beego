@@ -16,7 +16,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var dbAddress string = "root:38143195@tcp(192.168.33.11:3306)/pet?charset=utf8"
+var dbAddress string = "root:38143195@tcp(127.0.0.1:3306)/pet?charset=utf8"
 
 func init() {
 	orm.RegisterDriver("mysql", orm.DR_MySQL)
@@ -39,7 +39,7 @@ func main() {
 
 var FilterUser = func(ctx *context.Context) {
 	user := ctx.Input.Session("user")
-	if user == nil && ctx.Request.URL.Path != "/v1/users/login" && ctx.Request.URL.Path[:4] != "/doc" {
+	if user == nil && ctx.Request.URL.Path != "/v1/users/login" && ctx.Request.URL.Path[:4] != "/doc" && ctx.Request.URL.Path != "/v1/users/register" {
 		outPut := helper.Reponse(1, nil, "请先登录")
 		b, _ := json.Marshal(outPut)
 		ctx.Output.Header("Access-Control-Allow-Origin", "*")
