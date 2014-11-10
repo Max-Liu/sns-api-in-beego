@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
 	"github.com/beego/redigo/redis"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // 用户关系相关
@@ -56,52 +57,62 @@ func (this *UserRelationsController) Post() {
 	}
 
 	passed, _ := valid.Valid(&v)
-
 	if !passed {
 		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
 		this.Data["json"] = outPut
 	} else {
 
-		if v.Follower == v.Following {
-			outPut := helper.Reponse(1, nil, "无效的关系")
+		v.CreatedAt = time.Now()
+		v.UpdatedAt = time.Now()
+
+		redisAddress, _ := beego.Config("String", "redisServer", "")
+		c, err := redis.Dial("tcp", redisAddress.(string))
+		defer c.Close()
+		if err != nil {
+			beego.Error(err.Error())
+		}
+
+		if _, err := models.AddUserRelations(&v); err == nil {
+			//add relations in redis
+			if err != nil {
+				beego.Error(err.Error())
+			}
+			followerIdStr := strconv.Itoa(follower.Id)
+			result, err := c.Do("ZADD", "following:"+followerIdStr, time.Now().Unix(), followingIdStr)
+			if err != nil {
+				beego.Error(err.Error())
+			}
+
+			result, err = c.Do("ZCARD", "following:"+followerIdStr)
+			beego.Debug(result)
+			if err != nil {
+				beego.Error(err.Error())
+			}
+			spew.Dump(result)
+			v.Follower.Following = result.(int64)
+			spew.Dump(v.Follower)
+			models.UpdateUsersById(v.Follower)
+
+			result, err = c.Do("ZADD", "follower:"+followingIdStr, time.Now().Unix(), followerIdStr)
+			beego.Debug(result)
+			if err != nil {
+				beego.Error(err.Error())
+			}
+
+			result, err = c.Do("ZCARD", "follower:"+followingIdStr)
+			beego.Debug(result)
+			if err != nil {
+				beego.Error(err.Error())
+			}
+
+			v.Following.Follower = result.(int64)
+			models.UpdateUsersById(v.Following)
+
+			outPut := helper.Reponse(0, v, "创建成功")
 			this.Data["json"] = outPut
 		} else {
-			v.CreatedAt = time.Now()
-			v.UpdatedAt = time.Now()
-
-			if id, err := models.AddUserRelations(&v); err == nil {
-				//add relations in redis
-				redisAddress, _ := beego.Config("string", "redisServer", "")
-				c, err := redis.Dial("tcp", redisAddress.(string))
-				defer c.Close()
-				if err != nil {
-					beego.Error(err.Error())
-				}
-				followerIdStr := strconv.Itoa(follower.Id)
-				result, err := c.Do("ZADD", "following:"+followerIdStr, time.Now().Unix(), followingIdStr)
-				beego.Debug(result)
-				if err != nil {
-					beego.Error(err.Error())
-				}
-				result, err = c.Do("ZADD", "follower:"+followingIdStr, time.Now().Unix(), followerIdStr)
-				beego.Debug(result)
-				if err != nil {
-					beego.Error(err.Error())
-				}
-
-				v.Id = int(id)
-				where := make(map[string]string)
-				where["id"] = strconv.Itoa(v.Follower.Id)
-				helper.AddOne("users", "following", where)
-				where["id"] = strconv.Itoa(v.Following.Id)
-				helper.AddOne("users", "follower", where)
-
-				outPut := helper.Reponse(0, v, "创建成功")
-				this.Data["json"] = outPut
-			} else {
-				outPut := helper.Reponse(1, nil, err.Error())
-				this.Data["json"] = outPut
-			}
+			outPut := helper.Reponse(1, nil, err.Error())
+			this.Data["json"] = outPut
 		}
 	}
 
@@ -237,7 +248,7 @@ func (this *UserRelationsController) Delete() {
 			if num, err := models.DeleteUserRelationsByUsers(v.Follower.Id, followingId); err == nil {
 
 				//delete relations in redis
-				redisAddress, _ := beego.Config("string", "redisServer", "")
+				redisAddress, _ := beego.Config("String", "redisServer", "")
 				c, err := redis.Dial("tcp", redisAddress.(string))
 				defer c.Close()
 				if err != nil {
