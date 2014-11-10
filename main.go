@@ -6,7 +6,7 @@ import (
 	_ "pet/docs"
 	"pet/models"
 	_ "pet/routers"
-	"web"
+	"pet/utils"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
