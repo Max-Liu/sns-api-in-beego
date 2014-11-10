@@ -200,7 +200,7 @@ func (this *PhotosController) Delete() {
 }
 
 func PushPhotoToFollowerTimelime(userId, photoId int) {
-	redisAddress, _ := beego.Config("string", "redisServer", "")
+	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {

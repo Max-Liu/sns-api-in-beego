@@ -20,8 +20,8 @@ type Users struct {
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 	Name      string    `orm:"column(name);size(45);null form:"name"`
-	Following int       `orm:"column(following);null"`
-	Follower  int       `orm:"column(follower);null"`
+	Following int64     `orm:"column(following);null"`
+	Follower  int64     `orm:"column(follower);null"`
 	Head      string    `orm:"column(head);null"`
 }
 
