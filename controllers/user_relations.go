@@ -296,6 +296,7 @@ func (this *UserRelationsController) Follower() {
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}
+	query := make(map[string]string)
 	query["following"] = userIdStr
 	fields = []string{"CreatedAt", "follower__name", "follower__id"}
 
