@@ -1,0 +1,5 @@
+static/uploads
+*.tmp
+tmp
+pet
+docs/docs
