@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"log"
 	"os"
 	"pet/models"
 	"pet/utils"
@@ -72,9 +71,10 @@ func (this *PhotosController) Post() {
 			v.User = &currentUser
 
 			if id, err := models.AddPhotos(&v); err == nil {
-				PushPhotoToFollowerTimelime(currentUser.Id, int(id))
-				v.Id = int(id)
-				outPut := helper.Reponse(0, v, "创建成功")
+				PushPhotoToFollowerTimelime(currentUser.Id, id)
+				v.Id = id
+				data := models.ConverToPhotoApiStruct(&v)
+				outPut := helper.Reponse(0, data, "创建成功")
 				this.Data["json"] = outPut
 			} else {
 				outPut := helper.Reponse(1, nil, err.Error())
@@ -94,23 +94,25 @@ func (this *PhotosController) Post() {
 func (this *PhotosController) GetOne() {
 
 	var data map[string]interface{} = make(map[string]interface{})
-	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
-	fields = []string{"user__name"}
-	data["photo"], err = models.GetPhotosById(id)
 
+	idStr := this.Ctx.Input.Params[":id"]
+	id, _ := strconv.ParseInt(idStr, 10, 0)
+	photo, err := models.GetPhotosById(id)
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 		this.ServeJson()
+		return
 	}
-	userSession := this.GetSession("user").(models.Users)
-	userId := strconv.Itoa(userSession.Id)
 
-	query["user_id"] = userId
-	fields = []string{"Content", "CreatedAt", "User__name"}
-	log.Println(fields)
-	data["comments"], err = models.GetAllPhotoComments(query, fields, sortby, order, offset, limit)
+	data["photo"] = models.ConverToPhotoApiStruct(photo)
+
+	//userSession := this.GetSession("user").(models.Users)
+	//userId := strconv.Itoa(userSession.Id)
+
+	//query["user_id"] = userId
+	//fields = []string{"Content", "CreatedAt", "User__name"}
+	//data["comments"], err = models.GetAllPhotoComments(query, fields, sortby, order, offset, limit)
 
 	outPut := helper.Reponse(0, data, "")
 	this.Data["json"] = outPut
@@ -128,7 +130,7 @@ func (this *PhotosController) GetOne() {
 func (this *PhotosController) GetAll() {
 
 	userIdInt := this.GetSession("user").(models.Users).Id
-	userIdStr := strconv.Itoa(userIdInt)
+	userIdStr := strconv.FormatInt(userIdInt, 10)
 
 	query := make(map[string]string)
 
@@ -145,9 +147,21 @@ func (this *PhotosController) GetAll() {
 	if v := this.GetString("sortby"); v != "" {
 		sortby = strings.Split(v, ",")
 	}
-	fields = []string{"Title", "Path", "Likes", "CreatedAt", "Id"}
+	fields = []string{"Title", "Path", "Likes", "CreatedAt", "Id", "User"}
 
 	photos, err := models.GetAllPhotos(query, fields, sortby, order, offset, limit)
+	var photoApiDatas []*models.PhotosApi
+
+	var photo models.Photos
+	for _, v := range photos {
+		photo.Title = v["Title"].(string)
+		photo.Id = v["Id"].(int64)
+		photo.Likes = v["Likes"].(int64)
+		photo.CreatedAt = v["CreatedAt"].(time.Time)
+		photo.User, _ = models.GetUsersById(v["User__User"].(int64))
+		photoApiData := models.ConverToPhotoApiStruct(&photo)
+		photoApiDatas = append(photoApiDatas, photoApiData)
+	}
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
@@ -155,7 +169,7 @@ func (this *PhotosController) GetAll() {
 		return
 	}
 
-	outPut := helper.Reponse(0, photos, "")
+	outPut := helper.Reponse(0, photoApiDatas, "")
 	this.Data["json"] = outPut
 	this.ServeJson()
 }
@@ -199,14 +213,14 @@ func (this *PhotosController) Delete() {
 	//this.ServeJson()
 }
 
-func PushPhotoToFollowerTimelime(userId, photoId int) {
+func PushPhotoToFollowerTimelime(userId, photoId int64) {
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {
 		beego.Error(err.Error())
 	}
-	userIdStr := strconv.Itoa(userId)
+	userIdStr := strconv.FormatInt(userId, 10)
 	result, err := c.Do("ZRANGE", "follower:"+userIdStr, 0, -1)
 	for _, userId := range result.([]interface{}) {
 		//photo time line
