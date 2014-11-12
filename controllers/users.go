@@ -47,7 +47,8 @@ func (this *UsersController) Register() {
 
 		if id, err := models.AddUsers(&v); err == nil {
 			v.Id = int(id)
-			outPut := helper.Reponse(0, v, "创建成功")
+			data := models.ConverToUserApiStruct(&v)
+			outPut := helper.Reponse(0, data, "创建成功")
 			this.Data["json"] = outPut
 		} else {
 			outPut := helper.Reponse(1, nil, err.Error())
@@ -112,7 +113,8 @@ func (this *UsersController) Put() {
 			} else {
 				v.Head = imagePath
 				if err := models.UpdateUsersById(v); err == nil {
-					outPut := helper.Reponse(0, v, "更新成功")
+					data := models.ConverToUserApiStruct(v)
+					outPut := helper.Reponse(0, data, "更新成功")
 					this.Data["json"] = outPut
 				} else {
 					outPut := helper.Reponse(1, nil, err.Error())
@@ -146,9 +148,12 @@ func (this *UsersController) GetOne() {
 	id, _ := strconv.Atoi(idStr)
 	v, err := models.GetUsersById(id)
 	if err != nil {
-		this.Data["json"] = err.Error()
+		outPut := helper.Reponse(1, nil, "")
+		this.Data["json"] = outPut
 	} else {
-		this.Data["json"] = v
+		data := models.ConverToUserApiStruct(v)
+		outPut := helper.Reponse(0, data, "")
+		this.Data["json"] = outPut
 	}
 	this.ServeJson()
 }
@@ -257,7 +262,8 @@ func (this *UsersController) Login() {
 		user, err := models.GetUserByLoginfo(password, email, phone, name)
 
 		if err == nil {
-			outPut := helper.Reponse(0, &user, "登陆成功")
+			data := models.ConverToUserApiStruct(&user)
+			outPut := helper.Reponse(0, data, "登陆成功")
 			this.SetSession("user", user)
 			this.Data["json"] = outPut
 		} else {

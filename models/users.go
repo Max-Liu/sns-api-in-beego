@@ -25,6 +25,19 @@ type Users struct {
 	Head      string    `orm:"column(head);null"`
 }
 
+type UsersApi struct {
+	Id        int
+	Email     string
+	Gender    int
+	Phone     string
+	CreatedAt int64
+	UpdatedAt int64
+	Name      string
+	Following int64
+	Follower  int64
+	HeadImage string
+}
+
 func init() {
 	orm.RegisterModel(new(Users))
 }
@@ -35,6 +48,19 @@ func AddUsers(m *Users) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return id, err
+}
+
+func ConverToUserApiStruct(m *Users) (data UsersApi) {
+	data.Id = m.Id
+	data.Email = m.Email
+	data.Gender = m.Gender
+	data.Phone = m.Phone
+	data.CreatedAt = m.CreatedAt.Unix()
+	data.UpdatedAt = m.UpdatedAt.Unix()
+	data.Name = m.Name
+	data.Follower = m.Follower
+	data.Following = m.Following
+	return data
 }
 
 // GetUsersById retrieves Users by Id. Returns error if
