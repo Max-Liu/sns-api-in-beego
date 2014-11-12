@@ -46,7 +46,7 @@ func (this *UsersController) Register() {
 		v.UpdatedAt = time.Now()
 
 		if id, err := models.AddUsers(&v); err == nil {
-			v.Id = int(id)
+			v.Id = id
 			data := models.ConverToUserApiStruct(&v)
 			outPut := helper.Reponse(0, data, "创建成功")
 			this.Data["json"] = outPut
@@ -70,7 +70,7 @@ func (this *UsersController) Register() {
 func (this *UsersController) Put() {
 
 	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
+	id, _ := strconv.ParseInt(idStr, 10, 0)
 
 	userSession := this.GetSession("user")
 	user := userSession.(models.Users)
@@ -145,7 +145,7 @@ func (this *UsersController) Put() {
 // @router /:id [get]
 func (this *UsersController) GetOne() {
 	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
+	id, _ := strconv.ParseInt(idStr, 10, 0)
 	v, err := models.GetUsersById(id)
 	if err != nil {
 		outPut := helper.Reponse(1, nil, "")

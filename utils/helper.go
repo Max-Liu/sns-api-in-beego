@@ -50,8 +50,8 @@ func GetMd5(str string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func GetGuid(id int) string {
-	idStr := strconv.Itoa(id)
+func GetGuid(id int64) string {
+	idStr := strconv.Itoa(int(id))
 	return GetMd5(idStr + strconv.Itoa(time.Now().Nanosecond()))
 }
 

@@ -129,7 +129,7 @@ func DeleteLikes(id int) (err error) {
 	return
 }
 
-func DeleteLikedPhoto(userId, photoId int) (num int64, err error) {
+func DeleteLikedPhoto(userId, photoId int64) (num int64, err error) {
 	o := orm.NewOrm()
 	target := Photos{Id: photoId}
 	err = o.Read(&target)

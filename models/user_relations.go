@@ -125,7 +125,7 @@ func DeleteUserRelations(id int) (err error) {
 	}
 	return
 }
-func DeleteUserRelationsByUsers(follower, following int) (num int64, err error) {
+func DeleteUserRelationsByUsers(follower, following int64) (num int64, err error) {
 
 	o := orm.NewOrm()
 	followerUser := Users{Id: follower}

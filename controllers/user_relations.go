@@ -40,7 +40,7 @@ func (this *UserRelationsController) Post() {
 	v.Follower = &follower
 
 	followingIdStr := this.GetString("following")
-	followingId, _ := strconv.Atoi(followingIdStr)
+	followingId, _ := strconv.ParseInt(followingIdStr, 10, 0)
 
 	v.Following, err = models.GetUsersById(followingId)
 	if err != nil {
@@ -77,7 +77,7 @@ func (this *UserRelationsController) Post() {
 			if err != nil {
 				beego.Error(err.Error())
 			}
-			followerIdStr := strconv.Itoa(follower.Id)
+			followerIdStr := strconv.FormatInt(follower.Id, 10)
 			result, err := c.Do("ZADD", "following:"+followerIdStr, time.Now().Unix(), followingIdStr)
 			if err != nil {
 				beego.Error(err.Error())
@@ -226,7 +226,7 @@ func (this *UserRelationsController) Delete() {
 	var v models.UserRelations
 
 	followingIdStr := this.Ctx.Input.Params[":id"]
-	followingId, _ := strconv.Atoi(followingIdStr)
+	followingId, _ := strconv.ParseInt(followingIdStr, 10, 0)
 
 	valid := validation.Validation{}
 	this.ParseForm(&v)
@@ -254,7 +254,7 @@ func (this *UserRelationsController) Delete() {
 				if err != nil {
 					beego.Error(err.Error())
 				}
-				followerIdStr := strconv.Itoa(follower.Id)
+				followerIdStr := strconv.FormatInt(follower.Id, 10)
 				result, err := c.Do("ZREM", "following:"+followerIdStr, followingIdStr)
 				beego.Debug(result)
 				if err != nil {
@@ -267,9 +267,9 @@ func (this *UserRelationsController) Delete() {
 				}
 
 				where := make(map[string]string)
-				where["id"] = strconv.Itoa(v.Follower.Id)
+				where["id"] = strconv.FormatInt(v.Follower.Id, 10)
 				helper.MinusOne("users", "following", where)
-				where["id"] = strconv.Itoa(followingId)
+				where["id"] = strconv.FormatInt(followingId, 10)
 				helper.MinusOne("users", "follower", where)
 
 				outPut := helper.Reponse(0, num, "取消关注成功")
@@ -291,7 +291,7 @@ func (this *UserRelationsController) Delete() {
 // @router /follower [get]
 func (this *UserRelationsController) Follower() {
 	userSession := this.GetSession("user").(models.Users)
-	userIdStr := strconv.Itoa(userSession.Id)
+	userIdStr := strconv.FormatInt(userSession.Id, 10)
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
@@ -319,7 +319,7 @@ func (this *UserRelationsController) Follower() {
 // @router /following [get]
 func (this *UserRelationsController) Following() {
 	userSession := this.GetSession("user").(models.Users)
-	userIdStr := strconv.Itoa(userSession.Id)
+	userIdStr := strconv.FormatInt(userSession.Id, 10)
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)

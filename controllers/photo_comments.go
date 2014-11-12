@@ -37,7 +37,7 @@ func (this *PhotoCommentsController) Post() {
 	this.ParseForm(&v)
 
 	photoIdStr := this.GetString("photo_id")
-	photoId, _ := strconv.Atoi(photoIdStr)
+	photoId, _ := strconv.ParseInt(photoIdStr, 10, 0)
 
 	passed, _ := valid.Valid(&v)
 	if !passed {

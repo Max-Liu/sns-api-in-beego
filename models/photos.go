@@ -137,7 +137,7 @@ func UpdatePhotosById(m *Photos) (err error) {
 
 // DeletePhotos deletes Photos by Id and returns error if
 // the record to be deleted doesn't exist
-func DeletePhotos(id int) (err error) {
+func DeletePhotos(id int64) (err error) {
 	o := orm.NewOrm()
 	v := Photos{Id: id}
 	// ascertain id exists in the database
@@ -217,14 +217,14 @@ func GetMyPhotos(query map[string]string, fields []string, sortby []string, orde
 	}
 	return nil, err
 }
-func GetFollowingPhotos(userId int, offset int64) (interface{}, error) {
+func GetFollowingPhotos(userId int64, offset int64) (interface{}, error) {
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {
 		beego.Error(err.Error())
 	}
-	userIdStr := strconv.Itoa(userId)
+	userIdStr := strconv.FormatInt(userId, 10)
 	result, err := c.Do("LRANGE", "ptm:"+userIdStr, offset, offset+99)
 
 	if err != nil {

@@ -42,7 +42,7 @@ func (this *LikesController) Post() {
 		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
 		this.Data["json"] = outPut
 	} else {
-		v.Photo, err = models.GetPhotosById(photoId)
+		v.Photo, err = models.GetPhotosById(int64(photoId))
 		if err != nil {
 			outPut := helper.Reponse(1, nil, err.Error())
 			this.Data["json"] = outPut
@@ -100,7 +100,7 @@ func (this *LikesController) GetAll() {
 	}
 
 	userSession := this.GetSession("user").(models.Users)
-	userId := strconv.Itoa(userSession.Id)
+	userId := strconv.FormatInt(userSession.Id, 10)
 
 	query["user_id"] = userId
 	fields = []string{"CreatedAt", "Photo__path", "Photo__User__name", "Photo__title"}
@@ -146,7 +146,7 @@ func (this *LikesController) Put() {
 func (this *LikesController) Delete() {
 	var v models.Likes
 	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
+	id, _ := strconv.ParseInt(idStr, 10, 0)
 
 	valid := validation.Validation{}
 	this.ParseForm(&v)

@@ -11,7 +11,7 @@ import (
 )
 
 type Users struct {
-	Id        int       `orm:"column(id);auto"`
+	Id        int64     `orm:"column(id);auto"`
 	Email     string    `orm:"column(email);size(128);null" form:"email" valid:"Email"`
 	Password  string    `orm:"column(password);size(128);null" form:"password" valid:"Required"`
 	Gender    int       `orm:"column(gender);null" form:"gender"`
@@ -26,7 +26,7 @@ type Users struct {
 }
 
 type UsersApi struct {
-	Id        int
+	Id        int64
 	Email     string
 	Gender    int
 	Phone     string
@@ -50,7 +50,8 @@ func AddUsers(m *Users) (id int64, err error) {
 	return id, err
 }
 
-func ConverToUserApiStruct(m *Users) (data UsersApi) {
+func ConverToUserApiStruct(m *Users) (data *UsersApi) {
+	data = new(UsersApi)
 	data.Id = m.Id
 	data.Email = m.Email
 	data.Gender = m.Gender
@@ -60,12 +61,13 @@ func ConverToUserApiStruct(m *Users) (data UsersApi) {
 	data.Name = m.Name
 	data.Follower = m.Follower
 	data.Following = m.Following
+	data.HeadImage = m.Head
 	return data
 }
 
 // GetUsersById retrieves Users by Id. Returns error if
 // Id doesn't exist
-func GetUsersById(id int) (v *Users, err error) {
+func GetUsersById(id int64) (v *Users, err error) {
 	o := orm.NewOrm()
 	v = &Users{Id: id}
 	if err = o.Read(v); err == nil {
@@ -165,7 +167,7 @@ func UpdateUsersById(m *Users) (err error) {
 
 // DeleteUsers deletes Users by Id and returns error if
 // the record to be deleted doesn't exist
-func DeleteUsers(id int) (err error) {
+func DeleteUsers(id int64) (err error) {
 	o := orm.NewOrm()
 	v := Users{Id: id}
 	// ascertain id exists in the database
