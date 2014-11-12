@@ -9,7 +9,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
 	"github.com/beego/redigo/redis"
-	"github.com/davecgh/go-spew/spew"
 )
 
 // 用户关系相关
@@ -88,9 +87,7 @@ func (this *UserRelationsController) Post() {
 			if err != nil {
 				beego.Error(err.Error())
 			}
-			spew.Dump(result)
 			v.Follower.Following = result.(int64)
-			spew.Dump(v.Follower)
 			models.UpdateUsersById(v.Follower)
 
 			result, err = c.Do("ZADD", "follower:"+followingIdStr, time.Now().Unix(), followerIdStr)
@@ -107,8 +104,9 @@ func (this *UserRelationsController) Post() {
 
 			v.Following.Follower = result.(int64)
 			models.UpdateUsersById(v.Following)
+			data := models.ConverToUserRelationsApiStruct(&v)
 
-			outPut := helper.Reponse(0, v, "创建成功")
+			outPut := helper.Reponse(0, data, "创建成功")
 			this.Data["json"] = outPut
 		} else {
 			outPut := helper.Reponse(1, nil, err.Error())
@@ -298,14 +296,26 @@ func (this *UserRelationsController) Follower() {
 	}
 	query := make(map[string]string)
 	query["following"] = userIdStr
-	fields = []string{"CreatedAt", "follower__name", "follower__id"}
+	fields = []string{"CreatedAt", "follower__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
+
+	var UserRelationsApiDatas []*models.UserRelationsFollowerApi
+	var UserRelation models.UserRelations
+
+	for _, v := range l {
+		UserRelation.CreatedAt = v["CreatedAt"].(time.Time)
+		UserRelation.Follower, _ = models.GetUsersById(v["Follower__Id"].(int64))
+		UserRelationApiData := models.ConverToUserRelationsFollowerApirStruct(&UserRelation)
+		UserRelationsApiDatas = append(UserRelationsApiDatas, UserRelationApiData)
+
+	}
+
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, l, "")
+		outPut := helper.Reponse(0, UserRelationsApiDatas, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()
@@ -330,11 +340,21 @@ func (this *UserRelationsController) Following() {
 	fields = []string{"CreatedAt", "following__name", "following__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
+
+	var UserRelationsApiDatas []*models.UserRelationsFollowingApi
+	var UserRelation models.UserRelations
+
+	for _, v := range l {
+		UserRelation.CreatedAt = v["CreatedAt"].(time.Time)
+		UserRelation.Following, _ = models.GetUsersById(v["Following__Id"].(int64))
+		UserRelationApiData := models.ConverToUserRelationsFollowingApiStruct(&UserRelation)
+		UserRelationsApiDatas = append(UserRelationsApiDatas, UserRelationApiData)
+	}
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, l, "")
+		outPut := helper.Reponse(0, UserRelationsApiDatas, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()

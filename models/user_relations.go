@@ -17,6 +17,44 @@ type UserRelations struct {
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 }
 
+type UserRelationsFollowerApi struct {
+	Follower  *UsersApi
+	CreatedAt int64
+}
+
+type UserRelationsApi struct {
+	Follower  *UsersApi
+	Following *UsersApi
+	CreatedAt int64
+}
+
+type UserRelationsFollowingApi struct {
+	Following *UsersApi
+	CreatedAt int64
+}
+
+func ConverToUserRelationsFollowingApiStruct(m *UserRelations) (data *UserRelationsFollowingApi) {
+	data = new(UserRelationsFollowingApi)
+	data.Following = ConverToUserApiStruct(m.Following)
+	data.CreatedAt = m.CreatedAt.Unix()
+	return data
+}
+
+func ConverToUserRelationsFollowerApirStruct(m *UserRelations) (data *UserRelationsFollowerApi) {
+	data = new(UserRelationsFollowerApi)
+	data.Follower = ConverToUserApiStruct(m.Follower)
+	data.CreatedAt = m.CreatedAt.Unix()
+	return data
+}
+
+func ConverToUserRelationsApiStruct(m *UserRelations) (data *UserRelationsApi) {
+	data = new(UserRelationsApi)
+	data.Follower = ConverToUserApiStruct(m.Follower)
+	data.Following = ConverToUserApiStruct(m.Following)
+	data.CreatedAt = m.CreatedAt.Unix()
+	return data
+}
+
 func init() {
 	orm.RegisterModel(new(UserRelations))
 }
