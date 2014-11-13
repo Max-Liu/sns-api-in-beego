@@ -3,6 +3,7 @@ package test
 import (
 	"net/http"
 	_ "pet/routers"
+	"pet/seed"
 	"pet/utils"
 	"testing"
 
@@ -10,7 +11,6 @@ import (
 	_ "github.com/astaxie/beego/session/redis"
 )
 
-var dbAddress string = "root:38143195@tcp(192.168.33.11:3306)/pet?charset=utf8"
 var client *helper.User
 
 var testUrl string = "http://localhost:8080"
@@ -27,6 +27,15 @@ func TestGetUsersId(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
+	user := seed.GenerateUser()
+
+	query := make(map[string]string)
+	query["email"] = user.Email
+	query["phone"] = user.Phone
+	query["name"] = user.Name
+	query["password"] = user.Password
+	request = helper.MakeRequest(query, testUrl+"/v1/users/register", "POST")
+	baseTest(t)
 
 }
 
