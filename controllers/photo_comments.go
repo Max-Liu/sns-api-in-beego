@@ -103,12 +103,22 @@ func (this *PhotoCommentsController) GetAll() {
 	query := make(map[string]string)
 	query["photo_id"] = photoId
 
+	var photoCommentApiDatas []*models.PhotoCommentsApi
+	var photoComment models.PhotoComments
+
 	l, err := models.GetAllPhotoComments(query, fields, sortby, order, offset, limit)
+	for _, v := range l {
+		photoComment.Content = v["Content"].(string)
+		photoComment.User, _ = models.GetUsersById(v["User"].(int64))
+		photoComment.CreatedAt = v["CreatedAt"].(time.Time)
+		commentApidata := models.ConverToCommentsApirStruct(&photoComment)
+		photoCommentApiDatas = append(photoCommentApiDatas, commentApidata)
+	}
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, l, "")
+		outPut := helper.Reponse(0, photoCommentApiDatas, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()

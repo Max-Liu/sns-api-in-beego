@@ -17,6 +17,19 @@ type PhotoComments struct {
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 	User      *Users    `orm:"column(user_id);null;rel(fk)"`
 }
+type PhotoCommentsApi struct {
+	Content   string
+	CreatedAt int64
+	UserName  string
+}
+
+func ConverToCommentsApirStruct(m *PhotoComments) (data *PhotoCommentsApi) {
+	data = new(PhotoCommentsApi)
+	data.Content = m.Content
+	data.CreatedAt = m.CreatedAt.Unix()
+	data.UserName = m.User.Name
+	return data
+}
 
 func init() {
 	orm.RegisterModel(new(PhotoComments))
