@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -13,10 +12,25 @@ import (
 type Articles struct {
 	Id         int       `orm:"column(id);pk"`
 	Title      string    `orm:"column(title);size(45);null" form:"title" valid:"Required"`
-	Content    string    `orm:"column(content);null" form:"title" valid:"Required" `
+	Content    string    `orm:"column(content);null" form:"content" valid:"Required" `
 	CreatedAt  time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt  time.Time `orm:"column(updated_at);type(timestamp);null"`
 	TitleImage string    `orm:"column(title_image);null"`
+}
+type ArticlesApi struct {
+	Title      string
+	Content    string
+	CreatedAt  int64
+	TitleImage string
+}
+
+func ConverToArticleApiStruct(m *Articles) (data *ArticlesApi) {
+	data = new(ArticlesApi)
+	data.Title = m.Title
+	data.Content = m.Content
+	data.CreatedAt = m.CreatedAt.Unix()
+	data.TitleImage = m.TitleImage
+	return data
 }
 
 func init() {
@@ -45,7 +59,7 @@ func GetArticlesById(id int) (v *Articles, err error) {
 // GetAllArticles retrieves all Articles matches certain condition. Returns empty list if
 // no records exist
 func GetAllArticles(query map[string]string, fields []string, sortby []string, order []string,
-	offset int64, limit int64) (ml []interface{}, err error) {
+	offset int64, limit int64) (ml []orm.Params, err error) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(Articles))
 	// query k=v
@@ -93,25 +107,10 @@ func GetAllArticles(query map[string]string, fields []string, sortby []string, o
 		}
 	}
 
-	var l []Articles
+	var l []orm.Params
 	qs = qs.OrderBy(sortFields...)
-	if _, err := qs.Limit(limit, offset).All(&l, fields...); err == nil {
-		if len(fields) == 0 {
-			for _, v := range l {
-				ml = append(ml, v)
-			}
-		} else {
-			// trim unused fields
-			for _, v := range l {
-				m := make(map[string]interface{})
-				val := reflect.ValueOf(v)
-				for _, fname := range fields {
-					m[fname] = val.FieldByName(fname).Interface()
-				}
-				ml = append(ml, m)
-			}
-		}
-		return ml, nil
+	if _, err := qs.Limit(limit, offset).Values(&l, fields...); err == nil {
+		return l, nil
 	}
 	return nil, err
 }

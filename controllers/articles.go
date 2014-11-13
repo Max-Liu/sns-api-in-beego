@@ -66,7 +66,7 @@ func (this *ArticlesController) Post() {
 			v.UpdatedAt = time.Now()
 			if id, err := models.AddArticles(&v); err == nil {
 				v.Id = int(id)
-				outPut := helper.Reponse(0, v, "创建成功")
+				outPut := helper.Reponse(0, nil, "创建成功")
 				this.Data["json"] = outPut
 			} else {
 				outPut := helper.Reponse(1, nil, err.Error())
@@ -102,16 +102,30 @@ func (this *ArticlesController) GetOne() {
 // @Failure 403
 // @router / [get]
 func (this *ArticlesController) GetAll() {
+	query := make(map[string]string)
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}
 	l, err := models.GetAllArticles(query, fields, sortby, order, offset, limit)
+
+	var articalDatas []*models.ArticlesApi
+	var artical models.Articles
+
+	for _, v := range l {
+		artical.Content = v["Content"].(string)
+		artical.Title = v["Title"].(string)
+		artical.CreatedAt = v["CreatedAt"].(time.Time)
+		artical.TitleImage = v["TitleImage"].(string)
+		articalData := models.ConverToArticleApiStruct(&artical)
+		articalDatas = append(articalDatas, articalData)
+	}
+
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, l, "")
+		outPut := helper.Reponse(0, articalDatas, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()
