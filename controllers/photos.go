@@ -150,9 +150,10 @@ func (this *PhotosController) GetAll() {
 	fields = []string{"Title", "Path", "Likes", "CreatedAt", "Id", "User"}
 
 	photos, err := models.GetAllPhotos(query, fields, sortby, order, offset, limit)
-	var photoApiDatas []*models.PhotosApi
 
+	var photoApiDatas []*models.PhotosApi
 	var photo models.Photos
+
 	for _, v := range photos {
 		photo.Title = v["Title"].(string)
 		photo.Id = v["Id"].(int64)

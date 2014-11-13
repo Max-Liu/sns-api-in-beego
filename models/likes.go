@@ -17,6 +17,18 @@ type Likes struct {
 	User      *Users    `orm:"column(user_id);rel(fk)"`
 }
 
+type LikesApi struct {
+	CreatedAt int64
+	Photo     *PhotosApi
+}
+
+func ConverToLikedPhotoApiStruct(m *Likes) (data *LikesApi) {
+	data = new(LikesApi)
+	data.CreatedAt = m.CreatedAt.Unix()
+	data.Photo = ConverToPhotoApiStruct(m.Photo)
+	return data
+}
+
 func init() {
 	orm.RegisterModel(new(Likes))
 }

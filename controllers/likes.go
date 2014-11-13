@@ -55,9 +55,8 @@ func (this *LikesController) Post() {
 		v.User = &userSession
 		v.Photo.User = &userSession
 
-		if id, err := models.AddLikes(&v); err == nil {
-			v.Id = int(id)
-			outPut := helper.Reponse(0, v, "喜欢成功")
+		if _, err := models.AddLikes(&v); err == nil {
+			outPut := helper.Reponse(0, nil, "喜欢成功")
 			this.Data["json"] = outPut
 		} else {
 			outPut := helper.Reponse(1, nil, err.Error())
@@ -103,14 +102,25 @@ func (this *LikesController) GetAll() {
 	userId := strconv.FormatInt(userSession.Id, 10)
 
 	query["user_id"] = userId
-	fields = []string{"CreatedAt", "Photo__path", "Photo__User__name", "Photo__title"}
+	fields = []string{"CreatedAt", "Photo"}
 
 	l, err := models.GetAllLikes(query, fields, sortby, order, offset, limit)
+
+	var photoLikesDatas []*models.LikesApi
+	var likes models.Likes
+
+	for _, v := range l {
+
+		likes.CreatedAt = v["CreatedAt"].(time.Time)
+		likes.Photo, _ = models.GetPhotosById(v["Photo__Photo"].(int64))
+		photoLikesData := models.ConverToLikedPhotoApiStruct(&likes)
+		photoLikesDatas = append(photoLikesDatas, photoLikesData)
+	}
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, l, "")
+		outPut := helper.Reponse(0, photoLikesDatas, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()
