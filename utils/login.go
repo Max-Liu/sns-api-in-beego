@@ -10,9 +10,12 @@ import (
 )
 
 type User struct {
+	Info string
+	Pwd  string
 	http.Client
-	Request *http.Request
-	Resp    DataResponse
+	Request  *http.Request
+	Response *http.Response
+	Resp     DataResponse
 }
 
 func NewLogin(loginUrl string) (user *User) {
@@ -30,6 +33,45 @@ func NewLogin(loginUrl string) (user *User) {
 
 	user.Jar = jar
 	return user
+}
+
+func (client *User) Login() {
+	jar := new(myJar)
+	jar.jar = make(map[string][]*http.Cookie)
+	client.Jar = jar
+	client.Request, _ = http.NewRequest("GET", "http://localhost:8080"+"/v1/users/login?info="+client.Info+"&password="+client.Pwd, nil)
+	client.DoRequest()
+	jar.SetCookies(client.Request.URL, client.Response.Cookies())
+
+	client.Jar = jar
+}
+
+func (client *User) DoRequest() {
+
+	var err error
+	client.Response, err = client.Do(client.Request)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	bodyByte, err := ioutil.ReadAll(client.Response.Body)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	if client.Response.StatusCode != 200 {
+		log.Println("Printing error html file in current Path:output.html")
+		ioutil.WriteFile("clientErr.html", bodyByte, 0644)
+		log.Fatalln("resp code is not 200", client.Response.StatusCode)
+	}
+	var jsonData DataResponse
+	err = json.Unmarshal(bodyByte, &jsonData)
+	if err != nil {
+		log.Fatal(err.Error())
+
+	}
+	if jsonData.Err != 0 {
+		log.Println(jsonData.Msg)
+	}
+	client.Resp = jsonData
 }
 
 func (client *User) BaseTest(t *testing.T) {

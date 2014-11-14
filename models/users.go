@@ -36,6 +36,7 @@ type UsersApi struct {
 	Following int64
 	Follower  int64
 	HeadImage string
+	Pwd       string
 }
 
 func init() {
@@ -62,6 +63,7 @@ func ConverToUserApiStruct(m *Users) (data *UsersApi) {
 	data.Follower = m.Follower
 	data.Following = m.Following
 	data.HeadImage = m.Head
+	data.Pwd = m.Password
 	return data
 }
 
