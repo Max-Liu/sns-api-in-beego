@@ -14,7 +14,7 @@ import (
 var client *helper.User
 
 var testUrl string = "http://localhost:8080"
-var jsonData helper.Response
+
 var request *http.Request
 
 func init() {

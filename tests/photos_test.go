@@ -2,7 +2,7 @@ package test
 
 import (
 	"net/http"
-	"pet/utils"
+	helper "pet/utils"
 	"strconv"
 	"testing"
 )
@@ -14,7 +14,7 @@ func TestCreatePhoto(t *testing.T) {
 	query["title"] = "mydog"
 	client.Request = helper.MakeUploadRequest(query, testUrl+"/v1/photos/", "POST", "photo", "dog.jpg")
 	client.BaseTest(t)
-	photoData := jsonData.Data.(map[string]interface{})
+	photoData := client.Resp.Data.(map[string]interface{})
 	photoId = photoData["Id"].(float64)
 }
 

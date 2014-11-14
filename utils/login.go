@@ -12,7 +12,7 @@ import (
 type User struct {
 	http.Client
 	Request *http.Request
-	Response
+	Resp    DataResponse
 }
 
 func NewLogin(loginUrl string) (user *User) {
@@ -51,7 +51,7 @@ func (client *User) BaseTest(t *testing.T) {
 		t.Log("status 200")
 	}
 
-	var jsonData Response
+	var jsonData DataResponse
 	err = json.Unmarshal(bodyByte, &jsonData)
 	if err != nil {
 		t.Error(err.Error())
@@ -59,6 +59,7 @@ func (client *User) BaseTest(t *testing.T) {
 	if jsonData.Err != 0 {
 		t.Error(jsonData.Msg)
 	}
+	client.Resp = jsonData
 }
 
 type myJar struct {

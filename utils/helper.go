@@ -10,13 +10,13 @@ import (
 	"github.com/astaxie/beego/orm"
 )
 
-type Response struct {
+type DataResponse struct {
 	Err  int
 	Data interface{}
 	Msg  string
 }
 
-func Reponse(errCode int, data interface{}, msg string) Response {
+func Reponse(errCode int, data interface{}, msg string) DataResponse {
 
 	if data == nil {
 		data = ""
@@ -32,7 +32,7 @@ func Reponse(errCode int, data interface{}, msg string) Response {
 			}
 		}
 	}
-	resp := Response{
+	resp := DataResponse{
 		Err:  errCode,
 		Data: data,
 		Msg:  msg,
