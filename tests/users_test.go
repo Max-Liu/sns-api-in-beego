@@ -4,7 +4,7 @@ import (
 	"net/http"
 	_ "pet/routers"
 	"pet/seed"
-	"pet/utils"
+	helper "pet/utils"
 	"testing"
 
 	_ "github.com/astaxie/beego/session/mysql"
@@ -22,8 +22,8 @@ func init() {
 }
 
 func TestGetUsersId(t *testing.T) {
-	request, _ = http.NewRequest("GET", testUrl+"/v1/users/29", nil)
-	baseTest(t)
+	client.Request, _ = http.NewRequest("GET", testUrl+"/v1/users/29", nil)
+	client.BaseTest(t)
 }
 
 func TestRegister(t *testing.T) {
@@ -34,8 +34,8 @@ func TestRegister(t *testing.T) {
 	query["phone"] = user.Phone
 	query["name"] = user.Name
 	query["password"] = user.Password
-	request = helper.MakeRequest(query, testUrl+"/v1/users/register", "POST")
-	baseTest(t)
+	client.Request = helper.MakeRequest(query, testUrl+"/v1/users/register", "POST")
+	client.BaseTest(t)
 
 }
 
@@ -44,6 +44,6 @@ func TestUpdateUser(t *testing.T) {
 	query["id"] = "29"
 	query["gender"] = "1"
 	query["birthday"] = "1989-09-13"
-	request = helper.MakeUploadRequest(query, testUrl+"/v1/users/29", "PUT", "head", "head.jpg")
-	baseTest(t)
+	client.Request = helper.MakeUploadRequest(query, testUrl+"/v1/users/29", "PUT", "head", "head.jpg")
+	client.BaseTest(t)
 }
