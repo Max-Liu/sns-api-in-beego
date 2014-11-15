@@ -53,25 +53,30 @@ func MakeFakeUserData() *helper.User {
 
 func GenerateUserRelation() {
 	var clientList []*helper.User
+
 	for i := 0; i < 10; i++ {
 		clientList = append(clientList, MakeFakeUserData())
 	}
 	for _, clientA := range clientList {
 		for _, clientB := range clientList {
+			tempResp := clientB.Resp
 			userA := clientA.Resp.Data.(map[string]interface{})
 			userB := clientB.Resp.Data.(map[string]interface{})
 			if userA["Id"].(float64) == userB["Id"].(float64) {
 				continue
 			}
-			userAStrId := strconv.Itoa(int(userA["Id"].(float64)))
 
-			query := make(map[string]string)
-			query["following"] = userAStrId
 			clientB.Info = userB["Email"].(string)
 			clientB.Pwd = userB["Pwd"].(string)
 			clientB.Login()
+
+			query := make(map[string]string)
+			userAStrId := strconv.Itoa(int(userA["Id"].(float64)))
+			query["following"] = userAStrId
+
 			clientB.Request = helper.MakeRequest(query, host+"/v1/ul", "POST")
 			clientB.DoRequest()
+			clientB.Resp = tempResp
 		}
 	}
 }
