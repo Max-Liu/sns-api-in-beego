@@ -37,6 +37,24 @@ func GenerateUser() *models.Users {
 	return fakeUser
 }
 
+func UploadPhotos() {
+	o := orm.NewOrm()
+	user := new(models.Users)
+	var lists []orm.Params
+	o.QueryTable(user).OrderBy("-id").Limit(10).Values(&lists)
+	for _, user := range lists {
+		clientUser := new(helper.User)
+		clientUser.Info = user["Email"].(string)
+		clientUser.Pwd = user["Password"].(string)
+		clientUser.Login()
+		query := make(map[string]string)
+		randStr := strconv.Itoa(time.Now().Nanosecond())
+		query["title"] = "mydog" + randStr
+		clientUser.Request = helper.MakeUploadRequest(query, host+"/v1/photos/", "POST", "photo", "dog.jpg")
+		clientUser.DoRequest()
+	}
+}
+
 func MakeFakeUserData() *helper.User {
 	fakeUser := GenerateUser()
 	query := make(map[string]string)
@@ -80,6 +98,7 @@ func GenerateUserRelation() {
 		}
 	}
 }
+
 func randInt(min int, max int) int {
 	rand.Seed(time.Now().UTC().UnixNano())
 	return min + rand.Intn(max-min)
