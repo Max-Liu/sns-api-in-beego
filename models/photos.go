@@ -228,7 +228,7 @@ func GetMyPhotos(query map[string]string, fields []string, sortby []string, orde
 	}
 	return nil, err
 }
-func GetFollowingPhotos(userId int64, offset int64) (interface{}, error) {
+func GetFollowingPhotos(userId int64, offset int64, limit int64) (interface{}, error) {
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
@@ -236,7 +236,7 @@ func GetFollowingPhotos(userId int64, offset int64) (interface{}, error) {
 		beego.Error(err.Error())
 	}
 	userIdStr := strconv.FormatInt(userId, 10)
-	result, err := c.Do("LRANGE", "ptm:"+userIdStr, offset, offset+99)
+	result, err := c.Do("LRANGE", "ptm:"+userIdStr, offset, offset+limit)
 
 	if err != nil {
 		beego.Error(err.Error())

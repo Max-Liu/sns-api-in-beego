@@ -256,7 +256,7 @@ func (this *PhotosController) GetFollowingPhotosTimeline() {
 	userSession := this.GetSession("user").(models.Users)
 	userId := userSession.Id
 
-	l, err := models.GetFollowingPhotos(userId, offset)
+	l, err := models.GetFollowingPhotos(userId, offset, limit)
 
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
