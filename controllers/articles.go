@@ -102,6 +102,7 @@ func (this *ArticlesController) GetOne() {
 // @Failure 403
 // @router / [get]
 func (this *ArticlesController) GetAll() {
+	var fields []string
 	query := make(map[string]string)
 
 	if v, err := this.GetInt("offset"); err == nil {
