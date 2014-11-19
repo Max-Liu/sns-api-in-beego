@@ -147,7 +147,7 @@ func (this *PhotosController) GetAll() {
 	if v := this.GetString("sortby"); v != "" {
 		sortby = strings.Split(v, ",")
 	}
-	fields = []string{"Title", "Path", "Likes", "CreatedAt", "Id", "User"}
+	fields := []string{"Title", "Path", "Likes", "CreatedAt", "Id", "User"}
 
 	photos, err := models.GetAllPhotos(query, fields, sortby, order, offset, limit)
 
@@ -159,6 +159,7 @@ func (this *PhotosController) GetAll() {
 		photo.Id = v["Id"].(int64)
 		photo.Likes = v["Likes"].(int64)
 		photo.CreatedAt = v["CreatedAt"].(time.Time)
+		photo.Path = v["Path"].(string)
 		photo.User, _ = models.GetUsersById(v["User__User"].(int64))
 		photoApiData := models.ConverToPhotoApiStruct(&photo)
 		photoApiDatas = append(photoApiDatas, photoApiData)

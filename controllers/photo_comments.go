@@ -95,6 +95,7 @@ func (this *PhotoCommentsController) GetOne() {
 // @router / [get]
 func (this *PhotoCommentsController) GetAll() {
 
+	var fields []string
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}

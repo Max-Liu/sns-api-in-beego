@@ -94,6 +94,7 @@ func (this *LikesController) GetOne() {
 // @router / [get]
 func (this *LikesController) GetAll() {
 
+	query := make(map[string]string)
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}
@@ -101,8 +102,8 @@ func (this *LikesController) GetAll() {
 	userSession := this.GetSession("user").(models.Users)
 	userId := strconv.FormatInt(userSession.Id, 10)
 
+	fields := []string{"CreatedAt", "Photo"}
 	query["user_id"] = userId
-	fields = []string{"CreatedAt", "Photo"}
 
 	l, err := models.GetAllLikes(query, fields, sortby, order, offset, limit)
 

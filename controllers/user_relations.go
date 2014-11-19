@@ -296,7 +296,7 @@ func (this *UserRelationsController) Follower() {
 	}
 	query := make(map[string]string)
 	query["following"] = userIdStr
-	fields = []string{"CreatedAt", "follower__id"}
+	fields := []string{"CreatedAt", "follower__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
 
@@ -337,7 +337,7 @@ func (this *UserRelationsController) Following() {
 
 	query := make(map[string]string)
 	query["follower"] = userIdStr
-	fields = []string{"CreatedAt", "following__name", "following__id"}
+	fields := []string{"CreatedAt", "following__name", "following__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
 

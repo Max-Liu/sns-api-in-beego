@@ -263,6 +263,7 @@ func GetFollowingPhotos(userId int64, offset int64, limit int64) (interface{}, e
 		photo.Id = v["Id"].(int64)
 		photo.Likes = v["Likes"].(int64)
 		photo.Path = v["Path"].(string)
+		photo.Title = v["Title"].(string)
 		photo.User, _ = GetUsersById(v["User"].(int64))
 		photoApiData := ConverToPhotoApiStruct(&photo)
 		photoApiDatas = append(photoApiDatas, photoApiData)
