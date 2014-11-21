@@ -54,5 +54,15 @@ func init() {
 			),
 		),
 	)
+	admin := beego.NewNamespace("/admin",
+
+		beego.NSNamespace("/articles",
+			beego.NSInclude(
+				&controllers.Admin_articleController{},
+			),
+		),
+	)
+
+	beego.AddNamespace(admin)
 	beego.AddNamespace(ns)
 }
