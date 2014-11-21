@@ -64,8 +64,7 @@ func (this *ArticlesController) Post() {
 			v.TitleImage = imagePath
 			v.CreatedAt = time.Now()
 			v.UpdatedAt = time.Now()
-			if id, err := models.AddArticles(&v); err == nil {
-				v.Id = int(id)
+			if _, err := models.AddArticles(&v); err == nil {
 				outPut := helper.Reponse(0, nil, "创建成功")
 				this.Data["json"] = outPut
 			} else {
@@ -85,7 +84,7 @@ func (this *ArticlesController) Post() {
 // @router /:id [get]
 func (this *ArticlesController) GetOne() {
 	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
+	id, _ := strconv.ParseInt(idStr, 10, 0)
 	v, err := models.GetArticlesById(id)
 	if err != nil {
 		this.Data["json"] = err.Error()
@@ -143,7 +142,7 @@ func (this *ArticlesController) GetAll() {
 // @router /:id [put]
 func (this *ArticlesController) Put() {
 	idStr := this.Ctx.Input.Params[":id"]
-	id, _ := strconv.Atoi(idStr)
+	id, _ := strconv.ParseInt(idStr, 10, 0)
 
 	v := models.Articles{Id: id}
 
@@ -188,7 +187,7 @@ func (this *ArticlesController) Put() {
 			artical.TitleImage = imagePath
 
 			if err := models.UpdateArticlesById(artical); err == nil {
-				v.Id = int(id)
+				v.Id = id
 				outPut := helper.Reponse(0, v, "创建成功")
 				this.Data["json"] = outPut
 			} else {

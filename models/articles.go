@@ -10,7 +10,7 @@ import (
 )
 
 type Articles struct {
-	Id         int       `orm:"column(id);pk"`
+	Id         int64     `orm:"column(id);pk"`
 	Title      string    `orm:"column(title);size(45);null" form:"title" valid:"Required"`
 	Content    string    `orm:"column(content);null" form:"content" valid:"Required" `
 	CreatedAt  time.Time `orm:"column(created_at);type(timestamp);null"`
@@ -18,6 +18,7 @@ type Articles struct {
 	TitleImage string    `orm:"column(title_image);null"`
 }
 type ArticlesApi struct {
+	Id         int64
 	Title      string
 	Content    string
 	CreatedAt  int64
@@ -27,6 +28,7 @@ type ArticlesApi struct {
 func ConverToArticleApiStruct(m *Articles) (data *ArticlesApi) {
 	data = new(ArticlesApi)
 	data.Title = m.Title
+	data.Id = m.Id
 	data.Content = m.Content
 	data.CreatedAt = m.CreatedAt.Unix()
 	data.TitleImage = m.TitleImage
@@ -47,7 +49,7 @@ func AddArticles(m *Articles) (id int64, err error) {
 
 // GetArticlesById retrieves Articles by Id. Returns error if
 // Id doesn't exist
-func GetArticlesById(id int) (v *Articles, err error) {
+func GetArticlesById(id int64) (v *Articles, err error) {
 	o := orm.NewOrm()
 	v = &Articles{Id: id}
 	if err = o.Read(v); err == nil {
@@ -132,7 +134,7 @@ func UpdateArticlesById(m *Articles) (err error) {
 
 // DeleteArticles deletes Articles by Id and returns error if
 // the record to be deleted doesn't exist
-func DeleteArticles(id int) (err error) {
+func DeleteArticles(id int64) (err error) {
 	o := orm.NewOrm()
 	v := Articles{Id: id}
 	// ascertain id exists in the database
