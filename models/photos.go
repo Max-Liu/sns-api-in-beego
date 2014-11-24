@@ -28,8 +28,9 @@ type PhotosApi struct {
 	Path      string
 	CreatedAt int64
 	//UpdatedAt int64
-	User  *UsersApi
-	Likes int64
+	User     *UsersApi
+	Likes    int64
+	Comments int64
 }
 
 func init() {
@@ -45,6 +46,7 @@ func ConverToPhotoApiStruct(m *Photos) (data *PhotosApi) {
 	data.User = ConverToUserApiStruct(m.User)
 	data.Likes = m.Likes
 	data.Path = m.Path
+	data.Comments = GetPhotosCommentCount(m.Id)
 
 	return data
 }

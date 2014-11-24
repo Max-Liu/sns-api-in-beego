@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/astaxie/beego/orm"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type PhotoComments struct {
@@ -141,4 +142,12 @@ func DeletePhotoComments(id int) (err error) {
 		}
 	}
 	return
+}
+
+func GetPhotosCommentCount(photoId int64) (count int64) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(new(PhotoComments))
+	count, _ = qs.Filter("photo_id", photoId).Count()
+	spew.Dump(count)
+	return count
 }
