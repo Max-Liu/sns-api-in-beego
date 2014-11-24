@@ -113,6 +113,7 @@ func (this *ArticlesController) GetAll() {
 	var artical models.Articles
 
 	for _, v := range l {
+		artical.Id = v["Id"].(int64)
 		artical.Content = v["Content"].(string)
 		artical.Title = v["Title"].(string)
 		artical.CreatedAt = v["CreatedAt"].(time.Time)
