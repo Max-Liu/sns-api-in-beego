@@ -31,6 +31,9 @@ func Reponse(errCode int, data interface{}, msg string) DataResponse {
 				data = ""
 			}
 		}
+		if reflect.ValueOf(data).IsNil() {
+			data = ""
+		}
 	}
 	resp := DataResponse{
 		Err:  errCode,

@@ -243,7 +243,7 @@ func (this *UserRelationsController) Delete() {
 			v.CreatedAt = time.Now()
 			v.UpdatedAt = time.Now()
 
-			if num, err := models.DeleteUserRelationsByUsers(v.Follower.Id, followingId); err == nil {
+			if _, err := models.DeleteUserRelationsByUsers(v.Follower.Id, followingId); err == nil {
 
 				//delete relations in redis
 				redisAddress, _ := beego.Config("String", "redisServer", "")
@@ -270,7 +270,7 @@ func (this *UserRelationsController) Delete() {
 				where["id"] = strconv.FormatInt(followingId, 10)
 				helper.MinusOne("users", "follower", where)
 
-				outPut := helper.Reponse(0, num, "取消关注成功")
+				outPut := helper.Reponse(0, nil, "取消关注成功")
 				this.Data["json"] = outPut
 			} else {
 				outPut := helper.Reponse(1, nil, err.Error())
