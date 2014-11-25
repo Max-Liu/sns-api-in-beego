@@ -21,6 +21,9 @@ func Reponse(errCode int, data interface{}, msg string) DataResponse {
 	if data == nil {
 		data = ""
 	} else {
+		if reflect.ValueOf(data).IsNil() {
+			data = ""
+		}
 		if reflect.TypeOf(data).String() == "[]interface {}" {
 			if reflect.ValueOf(data).Len() == 0 {
 				data = ""
@@ -28,11 +31,6 @@ func Reponse(errCode int, data interface{}, msg string) DataResponse {
 		}
 		if reflect.TypeOf(data).String() == "[]orm.Params" {
 			if reflect.ValueOf(data).Len() == 0 {
-				data = ""
-			}
-		}
-		if data != "" {
-			if reflect.ValueOf(data).IsNil() {
 				data = ""
 			}
 		}
