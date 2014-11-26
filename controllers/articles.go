@@ -132,15 +132,6 @@ func (this *ArticlesController) GetAll() {
 	this.ServeJson()
 }
 
-// @Title 更新文章
-// @Description 更新文章内容
-// @Param	id		path 	string	true		"文章ID"
-// @Param	title		form 	string	true		"文章标题"
-// @Param	content		form 	string	true		"文章内容"
-// @Param	title_image		form 	file	true		"标题图片"
-// @Success 200 {object} models.Articles
-// @Failure 403 :id is not int
-// @router /:id [put]
 func (this *ArticlesController) Put() {
 	idStr := this.Ctx.Input.Params[":id"]
 	id, _ := strconv.ParseInt(idStr, 10, 0)
