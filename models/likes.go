@@ -21,6 +21,12 @@ type LikesApi struct {
 	CreatedAt int64
 	Photo     *PhotosApi
 }
+type LikesUsersApi struct {
+	CreatedAt int64
+	UserName  string
+	UserImage string
+	UserId    int64
+}
 
 func ConverToLikedPhotoApiStruct(m *Likes) (data *LikesApi) {
 	data = new(LikesApi)
@@ -159,4 +165,24 @@ func DeleteLikedPhoto(userId, photoId int64) (num int64, err error) {
 		num, err = o.Delete(&v)
 	}
 	return num, err
+}
+
+func GetUsersByLikesPhoto(photoId int64) (usersList []*LikesUsersApi, err error) {
+
+	var lists []orm.Params
+	o := orm.NewOrm()
+	o.QueryTable(new(Likes)).Filter("target_id", photoId).Values(&lists, "User", "CreatedAt")
+	for _, v := range lists {
+		userId := v["User__User"]
+		CreatedAt := v["CreatedAt"].(time.Time)
+		user, _ := GetUsersById(userId.(int64))
+		data := new(LikesUsersApi)
+
+		data.CreatedAt = CreatedAt.Unix()
+		data.UserImage = user.Head
+		data.UserName = user.Name
+		data.UserId = userId.(int64)
+		usersList = append(usersList, data)
+	}
+	return usersList, err
 }

@@ -88,6 +88,7 @@ func (this *LikesController) GetOne() {
 
 // @Title 我喜欢过的
 // @Description 获取我喜欢过的照片列表
+// @Param	user_id	query	string	false	"目标用户Id,为空代表获取当前用户"
 // @Param	offset	query	string	false	"查询结果索引"
 // @Success 200 {object} models.Likes
 // @Failure 403
@@ -99,11 +100,15 @@ func (this *LikesController) GetAll() {
 		offset = int64(v)
 	}
 
-	userSession := this.GetSession("user").(models.Users)
-	userId := strconv.FormatInt(userSession.Id, 10)
-
 	fields := []string{"CreatedAt", "Photo"}
-	query["user_id"] = userId
+
+	if userId := this.GetString("user_id"); userId != "" {
+		query["user_id"] = userId
+	} else {
+		userSession := this.GetSession("user").(models.Users)
+		userId := strconv.FormatInt(userSession.Id, 10)
+		query["user_id"] = userId
+	}
 
 	l, err := models.GetAllLikes(query, fields, sortby, order, offset, limit)
 
@@ -174,6 +179,26 @@ func (this *LikesController) Delete() {
 			outPut := helper.Reponse(1, nil, err.Error())
 			this.Data["json"] = outPut
 		}
+	}
+	this.ServeJson()
+}
+
+// @Title 获取喜欢某个照片的用户列表
+// @Description 获取喜欢某个照片的用户列表
+// @Param	photo_id	query 	string	true		"照片ID"
+// @Success 200 {string} delete success!
+// @Failure 403 id is empty
+// @router /users [get]
+func (this *LikesController) UsersList() {
+	photoId, _ := this.GetInt64("photo_id")
+	userList, err := models.GetUsersByLikesPhoto(photoId)
+
+	if err != nil {
+		outPut := helper.Reponse(1, "", err.Error())
+		this.Data["json"] = outPut
+	} else {
+		outPut := helper.Reponse(0, userList, "")
+		this.Data["json"] = outPut
 	}
 	this.ServeJson()
 }
