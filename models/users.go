@@ -35,6 +35,8 @@ type UsersApi struct {
 	Name      string
 	Following int64
 	Follower  int64
+	Likes     int64
+	Photos    int64
 	HeadImage string
 	Pwd       string
 }
@@ -60,6 +62,8 @@ func ConverToUserApiStruct(m *Users) (data *UsersApi) {
 	data.CreatedAt = m.CreatedAt.Unix()
 	data.UpdatedAt = m.UpdatedAt.Unix()
 	data.Name = m.Name
+	data.Likes = GetLikesCount(m.Id)
+	data.Photos = GetPhotosCount(m.Id)
 	data.Follower = m.Follower
 	data.Following = m.Following
 	data.HeadImage = m.Head

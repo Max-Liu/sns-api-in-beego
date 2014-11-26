@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/astaxie/beego/orm"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type PhotoComments struct {
@@ -22,6 +21,7 @@ type PhotoCommentsApi struct {
 	Content   string
 	CreatedAt int64
 	UserName  string
+	UserImage string
 }
 
 func ConverToCommentsApirStruct(m *PhotoComments) (data *PhotoCommentsApi) {
@@ -29,6 +29,7 @@ func ConverToCommentsApirStruct(m *PhotoComments) (data *PhotoCommentsApi) {
 	data.Content = m.Content
 	data.CreatedAt = m.CreatedAt.Unix()
 	data.UserName = m.User.Name
+	data.UserImage = m.User.Head
 	return data
 }
 
@@ -148,6 +149,5 @@ func GetPhotosCommentCount(photoId int64) (count int64) {
 	o := orm.NewOrm()
 	qs := o.QueryTable(new(PhotoComments))
 	count, _ = qs.Filter("photo_id", photoId).Count()
-	spew.Dump(count)
 	return count
 }

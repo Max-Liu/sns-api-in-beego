@@ -283,19 +283,23 @@ func (this *UserRelationsController) Delete() {
 
 // @Title 粉丝列表
 // @Description 获取粉丝列表
+// @Param	user_id	query	string	false	"目标用户id，为空代表获取当前用户"
 // @Param	offset	query	string	false	"结果索引"
 // @Success 200 {object} models.UserRelations
 // @Failure 403
 // @router /follower [get]
 func (this *UserRelationsController) Follower() {
-	userSession := this.GetSession("user").(models.Users)
-	userIdStr := strconv.FormatInt(userSession.Id, 10)
-
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}
 	query := make(map[string]string)
-	query["following"] = userIdStr
+	if userIdStr := this.GetString("user_id"); userIdStr != "" {
+		query["following"] = userIdStr
+	} else {
+		userSession := this.GetSession("user").(models.Users)
+		userIdStr := strconv.FormatInt(userSession.Id, 10)
+		query["following"] = userIdStr
+	}
 	fields := []string{"CreatedAt", "follower__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
@@ -323,20 +327,25 @@ func (this *UserRelationsController) Follower() {
 
 // @Title 关注列表
 // @Description 获取关注列表
+// @Param	user_id	query	string	false	"目标用户id,为空代表获取当前用户"
 // @Param	offset	query	string	false	"结果索引"
 // @Success 200 {object} models.UserRelations
 // @Failure 403
 // @router /following [get]
 func (this *UserRelationsController) Following() {
-	userSession := this.GetSession("user").(models.Users)
-	userIdStr := strconv.FormatInt(userSession.Id, 10)
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}
 
 	query := make(map[string]string)
-	query["follower"] = userIdStr
+	if userIdStr := this.GetString("user_id"); userIdStr != "" {
+		query["follower"] = userIdStr
+	} else {
+		userSession := this.GetSession("user").(models.Users)
+		userIdStr := strconv.FormatInt(userSession.Id, 10)
+		query["follower"] = userIdStr
+	}
 	fields := []string{"CreatedAt", "following__name", "following__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)

@@ -18,6 +18,7 @@ func init() {
 		),
 
 		beego.NSNamespace("/likes",
+			beego.NSRouter("/users", &controllers.LikesController{}, "get:UsersList"),
 			beego.NSInclude(
 				&controllers.LikesController{},
 			),

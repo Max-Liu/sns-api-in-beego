@@ -47,6 +47,13 @@ func AddLikes(m *Likes) (id int64, err error) {
 	return
 }
 
+func GetLikesCount(userId int64) (count int64) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(new(Likes))
+	count, _ = qs.Filter("user_id", userId).Count()
+	return count
+}
+
 // GetLikesById retrieves Likes by Id. Returns error if
 // Id doesn't exist
 func GetLikesById(id int) (v *Likes, err error) {

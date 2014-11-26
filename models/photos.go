@@ -27,10 +27,9 @@ type PhotosApi struct {
 	Title     string
 	Path      string
 	CreatedAt int64
-	//UpdatedAt int64
-	User     *UsersApi
-	Likes    int64
-	Comments int64
+	User      *UsersApi
+	Likes     int64
+	Comments  int64
 }
 
 func init() {
@@ -42,7 +41,6 @@ func ConverToPhotoApiStruct(m *Photos) (data *PhotosApi) {
 	data.Id = m.Id
 	data.Title = m.Title
 	data.CreatedAt = m.CreatedAt.Unix()
-	//data.UpdatedAt = m.UpdatedAt.Unix()
 	data.User = ConverToUserApiStruct(m.User)
 	data.Likes = m.Likes
 	data.Path = m.Path
@@ -272,4 +270,11 @@ func GetFollowingPhotos(userId int64, offset int64, limit int64) (interface{}, e
 
 	}
 	return photoApiDatas, err
+}
+
+func GetPhotosCount(userId int64) (count int64) {
+	o := orm.NewOrm()
+	qs := o.QueryTable(new(Photos))
+	count, _ = qs.Filter("user_id", userId).Count()
+	return count
 }
