@@ -41,6 +41,12 @@ type UsersApi struct {
 	Pwd       string
 }
 
+type UserPosition struct {
+	X           float64
+	Y           float64
+	CurrentTime int64
+}
+
 func init() {
 	orm.RegisterModel(new(Users))
 }

@@ -285,3 +285,26 @@ func (this *UsersController) Logout() {
 	this.Data["json"] = outPut
 	this.ServeJson()
 }
+
+// @Title 发送地理位置
+// @Description 发送地理位置
+// @Success 200 {int} models.Users.Id
+// @Failure 403 body is empty
+// @Param	x	query	string	false	"坐标x"
+// @Param	y	query	string	false	"坐标y"
+// @Param	current_time	query	string	false	"当前时间"
+// @router /send_postion [post]
+func (this *UsersController) CurrentPostion() {
+	x, _ := this.GetFloat("x")
+	y, _ := this.GetFloat("y")
+	currentTime, _ := this.GetInt64("current_time")
+	position := new(models.UserPosition)
+	position.X = x
+	position.Y = y
+	position.CurrentTime = currentTime
+
+	this.SetSession("userPosition", *position)
+	outPut := helper.Reponse(0, nil, "")
+	this.Data["json"] = outPut
+	this.ServeJson()
+}

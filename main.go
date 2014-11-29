@@ -16,15 +16,17 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var dbAddress string = "root:38143195@tcp(127.0.0.1:3306)/pet?charset=utf8"
-
 func init() {
+	dbAddress, _ := beego.Config("String", "DbAddress", "")
 	orm.RegisterDriver("mysql", orm.DR_MySQL)
-	orm.RegisterDataBase("default", "mysql", dbAddress)
+	orm.RegisterDataBase("default", "mysql", dbAddress.(string))
 	orm.Debug = true
+
+	beego.EnableAdmin = true
 	beego.SetLevel(beego.LevelDebug)
 	beego.SetLogFuncCall(true)
 	gob.Register(models.Users{})
+	gob.Register(models.UserPosition{})
 
 }
 func main() {
@@ -32,6 +34,8 @@ func main() {
 		beego.DirectoryIndex = true
 		beego.SetStaticPath("/doc", "static/swagger")
 	}
+	beego.SetStaticPath("/s", "static/source")
+
 	beego.EnableDocs = true
 	beego.InsertFilter("/*", beego.BeforeRouter, FilterUser)
 	beego.Run()
