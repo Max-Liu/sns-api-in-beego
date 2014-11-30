@@ -34,6 +34,7 @@ func (this *LikesController) Post() {
 	var v models.Likes
 	valid := validation.Validation{}
 	this.ParseForm(&v)
+
 	photoIdStr := this.GetString("photo_id")
 	photoId, _ := strconv.Atoi(photoIdStr)
 
@@ -42,28 +43,32 @@ func (this *LikesController) Post() {
 		outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
 		this.Data["json"] = outPut
 	} else {
-		v.Photo, err = models.GetPhotosById(int64(photoId))
+		Photo, err := models.GetPhotosById(int64(photoId))
 		if err != nil {
 			outPut := helper.Reponse(1, nil, err.Error())
 			this.Data["json"] = outPut
 			this.ServeJson()
 			return
 		}
-		v.CreatedAt = time.Now()
-		v.UpdatedAt = time.Now()
-		userSession := this.GetSession("user").(models.Users)
-		v.User = &userSession
-		v.Photo.User = &userSession
 
-		if _, err := models.AddLikes(&v); err == nil {
+		like := new(models.Likes)
+		like.CreatedAt = time.Now()
+		like.UpdatedAt = time.Now()
+		userSession := this.GetSession("user").(models.Users)
+		like.User = &userSession
+		like.Photo = Photo
+
+		if _, err := models.AddLikes(like); err == nil {
 			outPut := helper.Reponse(0, nil, "喜欢成功")
 			this.Data["json"] = outPut
+			models.Notice(userSession.Id, Photo.Id, 0)
+
 		} else {
+
 			outPut := helper.Reponse(1, nil, err.Error())
 			this.Data["json"] = outPut
 		}
 	}
-
 	this.ServeJson()
 }
 
@@ -172,8 +177,8 @@ func (this *LikesController) Delete() {
 		this.Data["json"] = outPut
 	} else {
 		userSession := this.GetSession("user").(models.Users)
-		if num, err := models.DeleteLikedPhoto(userSession.Id, id); err == nil {
-			outPut := helper.Reponse(0, num, "取消喜欢成功")
+		if _, err := models.DeleteLikedPhoto(userSession.Id, id); err == nil {
+			outPut := helper.Reponse(0, nil, "取消喜欢成功")
 			this.Data["json"] = outPut
 		} else {
 			outPut := helper.Reponse(1, nil, err.Error())

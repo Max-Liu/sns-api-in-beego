@@ -45,10 +45,16 @@ func init() {
 			),
 		),
 
+		beego.NSNamespace("/msg",
+			beego.NSInclude(
+				&controllers.MsgController{},
+			),
+		),
 		beego.NSNamespace("/users",
 			beego.NSRouter("/login", &controllers.UsersController{}, "get:Login"),
 			beego.NSRouter("/logout", &controllers.UsersController{}, "get:Logout"),
 			beego.NSRouter("/register", &controllers.UsersController{}, "post:Register"),
+			beego.NSRouter("/send_position", &controllers.UsersController{}, "post:CurrentPostion"),
 
 			beego.NSInclude(
 				&controllers.UsersController{},
