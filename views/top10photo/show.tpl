@@ -1,0 +1,1 @@
+/Users/Max/Go/src/pet/views/top10photo/show.tpl
