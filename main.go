@@ -43,11 +43,21 @@ func main() {
 
 var FilterUser = func(ctx *context.Context) {
 	user := ctx.Input.Session("user")
-	if user == nil && ctx.Request.URL.Path != "/v1/users/login" && ctx.Request.URL.Path[:4] != "/doc" && ctx.Request.URL.Path != "/v1/users/register" {
+	if user == nil && ctx.Request.URL.Path != "/v1/users/login" && ctx.Request.URL.Path[:4] != "/doc" && !excludeLoginPath(ctx.Request.URL.Path) {
 		outPut := helper.Reponse(1, nil, "请先登录")
 		b, _ := json.Marshal(outPut)
 		ctx.Output.Header("Access-Control-Allow-Origin", "*")
 		ctx.WriteString(string(b))
 	}
 	ctx.Output.Header("Access-Control-Allow-Origin", "*")
+}
+
+func excludeLoginPath(currentPath string) bool {
+	excludeLoginPath := []string{"/v1/users/register", "/v1/photos/top10", "/v1/photos/"}
+	for _, v := range excludeLoginPath {
+		if v == currentPath {
+			return true
+		}
+	}
+	return false
 }

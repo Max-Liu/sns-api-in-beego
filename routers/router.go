@@ -32,6 +32,7 @@ func init() {
 
 		beego.NSNamespace("/photos",
 			beego.NSRouter("/following", &controllers.PhotosController{}, "get:GetFollowingPhotosTimeline"),
+			beego.NSRouter("/top10", &controllers.PhotosController{}, "get:GetTop10"),
 			beego.NSInclude(
 				&controllers.PhotosController{},
 			),
@@ -55,7 +56,6 @@ func init() {
 			beego.NSRouter("/logout", &controllers.UsersController{}, "get:Logout"),
 			beego.NSRouter("/register", &controllers.UsersController{}, "post:Register"),
 			beego.NSRouter("/send_position", &controllers.UsersController{}, "post:CurrentPostion"),
-
 			beego.NSInclude(
 				&controllers.UsersController{},
 			),

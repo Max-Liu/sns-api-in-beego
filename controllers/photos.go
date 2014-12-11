@@ -129,13 +129,12 @@ func (this *PhotosController) GetOne() {
 // @router / [get]
 func (this *PhotosController) GetAll() {
 
-	userIdInt := this.GetSession("user").(models.Users).Id
-	userIdStr := strconv.FormatInt(userIdInt, 10)
-
 	query := make(map[string]string)
 
 	if v := this.GetString("myphoto"); err == nil {
 		if v == "1" {
+			userIdInt := this.GetSession("user").(models.Users).Id
+			userIdStr := strconv.FormatInt(userIdInt, 10)
 			query["user_id"] = userIdStr
 		}
 	}
@@ -264,6 +263,25 @@ func (this *PhotosController) GetFollowingPhotosTimeline() {
 		this.Data["json"] = outPut
 	} else {
 		outPut := helper.Reponse(0, l, "")
+		this.Data["json"] = outPut
+	}
+	this.ServeJson()
+}
+
+// @Title 获取Top10
+// @Description 获取照片Top10
+// @Success
+// @Failure 403
+// @router /top10 [get]
+func (this *PhotosController) GetTop10() {
+
+	photos, err := models.GetTop10()
+
+	if err != nil {
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
+	} else {
+		outPut := helper.Reponse(0, photos, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()
