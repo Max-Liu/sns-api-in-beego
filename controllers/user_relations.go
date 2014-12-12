@@ -35,9 +35,12 @@ func (this *UserRelationsController) Post() {
 
 	valid := validation.Validation{}
 	this.ParseForm(&v)
+
+	//当前登陆用户ID
 	follower := this.GetSession("user").(models.Users)
 	v.Follower = &follower
 
+	//关注目标的用户ID
 	followingIdStr := this.GetString("following")
 	followingId, _ := strconv.ParseInt(followingIdStr, 10, 0)
 
