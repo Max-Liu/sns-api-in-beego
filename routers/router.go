@@ -51,6 +51,12 @@ func init() {
 				&controllers.MsgController{},
 			),
 		),
+
+		beego.NSNamespace("/feedback",
+			beego.NSInclude(
+				&controllers.FeedbackController{},
+			),
+		),
 		beego.NSNamespace("/users",
 			beego.NSRouter("/login", &controllers.UsersController{}, "get:Login"),
 			beego.NSRouter("/logout", &controllers.UsersController{}, "get:Logout"),
