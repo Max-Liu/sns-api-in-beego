@@ -228,7 +228,9 @@ func GetMyPhotos(query map[string]string, fields []string, sortby []string, orde
 	}
 	return nil, err
 }
-func GetFollowingPhotos(userId int64, offset int64, limit int64) (interface{}, error) {
+func GetFollowingPhotos(userId int64, offset int64, limit int64) ([]*PhotosApi, error) {
+	var photoApiDatas []*PhotosApi
+	var photo Photos
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
@@ -244,7 +246,7 @@ func GetFollowingPhotos(userId int64, offset int64, limit int64) (interface{}, e
 
 	if reflect.TypeOf(result).String() == "[]interface {}" {
 		if reflect.ValueOf(result).Len() == 0 {
-			return result, nil
+			return photoApiDatas, nil
 		}
 	}
 
@@ -256,8 +258,6 @@ func GetFollowingPhotos(userId int64, offset int64, limit int64) (interface{}, e
 	qs := o.QueryTable("photos")
 	var lists []orm.Params
 	qs.Filter("id__in", photoIdList).Values(&lists)
-	var photoApiDatas []*PhotosApi
-	var photo Photos
 	for _, v := range lists {
 		photo.CreatedAt = v["CreatedAt"].(time.Time)
 		photo.Id = v["Id"].(int64)

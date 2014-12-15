@@ -27,6 +27,7 @@ type MsgPhotoApi struct {
 	Content   string
 	CreatedAt int64
 	HeadImage string
+	UserId    int64
 }
 
 func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
@@ -57,6 +58,7 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 			msgPhotoApi.Content = user.Name + "喜欢了你的照片"
 			msgPhotoApi.HeadImage = user.Head
 			msgPhotoApi.CreatedAt = int64(photoMsgMap["CreatedAt"].(float64))
+			msgPhotoApi.UserId = user.Id
 			msgList = append(msgList, msgPhotoApi)
 		}
 		if msg.Kind == 1 {
@@ -66,6 +68,7 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 			user, _ := GetUsersById(int64(photoMsgMap["UserId"].(float64)))
 			msgPhotoApi.Content = user.Name + "评论了你的照片:" + photoMsgMap["Content"].(string)
 			msgPhotoApi.HeadImage = user.Head
+			msgPhotoApi.UserId = user.Id
 			msgPhotoApi.CreatedAt = int64(photoMsgMap["CreatedAt"].(float64))
 			msgList = append(msgList, msgPhotoApi)
 		}

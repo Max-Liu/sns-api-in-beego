@@ -97,6 +97,7 @@ func (this *PhotoCommentsController) GetOne() {
 // @router / [get]
 func (this *PhotoCommentsController) GetAll() {
 
+	data := make(map[string]interface{})
 	var fields []string
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
@@ -110,6 +111,14 @@ func (this *PhotoCommentsController) GetAll() {
 	var photoComment models.PhotoComments
 
 	l, err := models.GetAllPhotoComments(query, fields, sortby, order, offset, limit)
+	oneMore, _ := models.GetAllPhotoComments(query, fields, sortby, order, offset+limit, 1)
+
+	if len(oneMore) == 0 {
+		data["has_more"] = 0
+
+	} else {
+		data["has_more"] = 1
+	}
 	for _, v := range l {
 		photoComment.Content = v["Content"].(string)
 		photoComment.User, _ = models.GetUsersById(v["User"].(int64))
@@ -117,11 +126,18 @@ func (this *PhotoCommentsController) GetAll() {
 		commentApidata := models.ConverToCommentsApirStruct(&photoComment)
 		photoCommentApiDatas = append(photoCommentApiDatas, commentApidata)
 	}
+	if len(photoCommentApiDatas) == 0 {
+		data["comments"] = ""
+	} else {
+		data["comments"] = photoCommentApiDatas
+	}
+
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, photoCommentApiDatas, "")
+
+		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()

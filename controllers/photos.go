@@ -129,6 +129,7 @@ func (this *PhotosController) GetOne() {
 // @router / [get]
 func (this *PhotosController) GetAll() {
 
+	data := make(map[string]interface{})
 	query := make(map[string]string)
 
 	if v := this.GetString("myphoto"); err == nil {
@@ -149,6 +150,13 @@ func (this *PhotosController) GetAll() {
 	fields := []string{"Title", "Path", "Likes", "CreatedAt", "Id", "User"}
 
 	photos, err := models.GetAllPhotos(query, fields, sortby, order, offset, limit)
+	oneMore, _ := models.GetAllPhotos(query, fields, sortby, order, offset+limit, 1)
+	if len(oneMore) == 0 {
+		data["Has_more"] = 0
+
+	} else {
+		data["Has_more"] = 1
+	}
 
 	var photoApiDatas []*models.PhotosApi
 	var photo models.Photos
@@ -163,6 +171,12 @@ func (this *PhotosController) GetAll() {
 		photoApiData := models.ConverToPhotoApiStruct(&photo)
 		photoApiDatas = append(photoApiDatas, photoApiData)
 	}
+	if len(photoApiDatas) == 0 {
+		data["Photos"] = ""
+
+	} else {
+		data["Photos"] = photoApiDatas
+	}
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
@@ -170,7 +184,7 @@ func (this *PhotosController) GetAll() {
 		return
 	}
 
-	outPut := helper.Reponse(0, photoApiDatas, "")
+	outPut := helper.Reponse(0, data, "")
 	this.Data["json"] = outPut
 	this.ServeJson()
 }
@@ -249,6 +263,8 @@ func PushPhotoToFollowerTimelime(userId, photoId int64) {
 // @router /timeline/following [get]
 func (this *PhotosController) GetFollowingPhotosTimeline() {
 
+	data := make(map[string]interface{})
+
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}
@@ -257,12 +273,24 @@ func (this *PhotosController) GetFollowingPhotosTimeline() {
 	userId := userSession.Id
 
 	l, err := models.GetFollowingPhotos(userId, offset, limit)
+	oneMore, _ := models.GetFollowingPhotos(userId, offset+limit, 1)
+	if len(oneMore) == 0 {
+		data["Has_more"] = 0
+
+	} else {
+		data["Has_more"] = 1
+	}
+	if len(l) == 0 {
+		data["Timeline"] = ""
+	} else {
+		data["Timeline"] = l
+	}
 
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, l, "")
+		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()

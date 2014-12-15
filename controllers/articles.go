@@ -101,6 +101,8 @@ func (this *ArticlesController) GetOne() {
 // @Failure 403
 // @router / [get]
 func (this *ArticlesController) GetAll() {
+	data := make(map[string]interface{})
+
 	var fields []string
 	query := make(map[string]string)
 
@@ -108,6 +110,13 @@ func (this *ArticlesController) GetAll() {
 		offset = int64(v)
 	}
 	l, err := models.GetAllArticles(query, fields, sortby, order, offset, limit)
+	oneMore, _ := models.GetAllArticles(query, fields, sortby, order, offset, limit)
+	if len(oneMore) == 0 {
+		data["Has_more"] = 0
+
+	} else {
+		data["Has_more"] = 1
+	}
 
 	var articalDatas []*models.ArticlesApi
 	var artical models.Articles
@@ -121,12 +130,17 @@ func (this *ArticlesController) GetAll() {
 		articalData := models.ConverToArticleApiStruct(&artical)
 		articalDatas = append(articalDatas, articalData)
 	}
+	if len(articalDatas) == 0 {
+		data["Artical"] = ""
+	} else {
+		data["Artical"] = articalDatas
+	}
 
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, articalDatas, "")
+		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()

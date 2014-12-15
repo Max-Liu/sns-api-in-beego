@@ -292,6 +292,8 @@ func (this *UserRelationsController) Delete() {
 // @Failure 403
 // @router /follower [get]
 func (this *UserRelationsController) Follower() {
+	data := make(map[string]interface{})
+
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
 	}
@@ -306,6 +308,13 @@ func (this *UserRelationsController) Follower() {
 	fields := []string{"CreatedAt", "follower__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
+	oneMore, _ := models.GetAllUserRelations(query, fields, sortby, order, offset+limit, 1)
+	if len(oneMore) == 0 {
+		data["Has_more"] = 0
+
+	} else {
+		data["Has_more"] = 1
+	}
 
 	var UserRelationsApiDatas []*models.UserRelationsFollowerApi
 	var UserRelation models.UserRelations
@@ -315,14 +324,18 @@ func (this *UserRelationsController) Follower() {
 		UserRelation.Follower, _ = models.GetUsersById(v["Follower__Id"].(int64))
 		UserRelationApiData := models.ConverToUserRelationsFollowerApirStruct(&UserRelation)
 		UserRelationsApiDatas = append(UserRelationsApiDatas, UserRelationApiData)
-
+	}
+	if len(UserRelationsApiDatas) == 0 {
+		data["User"] = ""
+	} else {
+		data["User"] = UserRelationsApiDatas
 	}
 
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, UserRelationsApiDatas, "")
+		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()
@@ -336,6 +349,8 @@ func (this *UserRelationsController) Follower() {
 // @Failure 403
 // @router /following [get]
 func (this *UserRelationsController) Following() {
+
+	data := make(map[string]interface{})
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
@@ -352,6 +367,13 @@ func (this *UserRelationsController) Following() {
 	fields := []string{"CreatedAt", "following__name", "following__id"}
 
 	l, err := models.GetAllUserRelations(query, fields, sortby, order, offset, limit)
+	oneMore, _ := models.GetAllUserRelations(query, fields, sortby, order, offset+limit, 1)
+	if len(oneMore) == 0 {
+		data["Has_more"] = 0
+
+	} else {
+		data["Has_more"] = 1
+	}
 
 	var UserRelationsApiDatas []*models.UserRelationsFollowingApi
 	var UserRelation models.UserRelations
@@ -362,11 +384,16 @@ func (this *UserRelationsController) Following() {
 		UserRelationApiData := models.ConverToUserRelationsFollowingApiStruct(&UserRelation)
 		UserRelationsApiDatas = append(UserRelationsApiDatas, UserRelationApiData)
 	}
+	if len(UserRelationsApiDatas) == 0 {
+		data["User"] = ""
+	} else {
+		data["User"] = UserRelationsApiDatas
+	}
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, UserRelationsApiDatas, "")
+		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()

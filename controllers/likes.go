@@ -100,6 +100,7 @@ func (this *LikesController) GetOne() {
 // @router / [get]
 func (this *LikesController) GetAll() {
 
+	data := make(map[string]interface{})
 	query := make(map[string]string)
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
@@ -116,6 +117,13 @@ func (this *LikesController) GetAll() {
 	}
 
 	l, err := models.GetAllLikes(query, fields, sortby, order, offset, limit)
+	oneMore, _ := models.GetAllLikes(query, fields, sortby, order, offset+limit, 1)
+	if len(oneMore) == 0 {
+		data["Has_more"] = 0
+
+	} else {
+		data["Has_more"] = 1
+	}
 
 	var photoLikesDatas []*models.LikesApi
 	var likes models.Likes
@@ -126,20 +134,16 @@ func (this *LikesController) GetAll() {
 		photoLikesData := models.ConverToLikedPhotoApiStruct(&likes)
 		photoLikesDatas = append(photoLikesDatas, photoLikesData)
 	}
-
-	hasMore := hasMore(query, fields, offset, "likes")
+	if len(photoLikesDatas) == 0 {
+		data["likes"] = ""
+	} else {
+		data["likes"] = photoLikesDatas
+	}
 
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		data := make(map[string]interface{})
-		data["has_more"] = hasMore
-		if len(photoLikesDatas) == 0 {
-			data["likes"] = ""
-		} else {
-			data["likes"] = photoLikesDatas
-		}
 		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
