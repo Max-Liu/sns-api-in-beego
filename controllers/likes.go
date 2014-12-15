@@ -121,17 +121,26 @@ func (this *LikesController) GetAll() {
 	var likes models.Likes
 
 	for _, v := range l {
-
 		likes.CreatedAt = v["CreatedAt"].(time.Time)
 		likes.Photo, _ = models.GetPhotosById(v["Photo__Photo"].(int64))
 		photoLikesData := models.ConverToLikedPhotoApiStruct(&likes)
 		photoLikesDatas = append(photoLikesDatas, photoLikesData)
 	}
+
+	hasMore := hasMore(query, fields, offset, "likes")
+
 	if err != nil {
 		outPut := helper.Reponse(1, nil, err.Error())
 		this.Data["json"] = outPut
 	} else {
-		outPut := helper.Reponse(0, photoLikesDatas, "")
+		data := make(map[string]interface{})
+		data["has_more"] = hasMore
+		if len(photoLikesDatas) == 0 {
+			data["likes"] = ""
+		} else {
+			data["likes"] = photoLikesDatas
+		}
+		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
 	this.ServeJson()

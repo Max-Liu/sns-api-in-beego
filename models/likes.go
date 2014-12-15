@@ -10,7 +10,7 @@ import (
 )
 
 type Likes struct {
-	Id        int       `orm:"column(id);pk"`
+	Id        int64     `orm:"column(id);pk"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 	Photo     *Photos   `orm:"column(target_id);rel(fk)" valid:"Required"`
@@ -56,7 +56,7 @@ func GetLikesCount(userId int64) (count int64) {
 
 // GetLikesById retrieves Likes by Id. Returns error if
 // Id doesn't exist
-func GetLikesById(id int) (v *Likes, err error) {
+func GetLikesById(id int64) (v *Likes, err error) {
 	o := orm.NewOrm()
 	v = &Likes{Id: id}
 	if err = o.Read(v); err == nil {
@@ -141,7 +141,7 @@ func UpdateLikesById(m *Likes) (err error) {
 
 // DeleteLikes deletes Likes by Id and returns error if
 // the record to be deleted doesn't exist
-func DeleteLikes(id int) (err error) {
+func DeleteLikes(id int64) (err error) {
 	o := orm.NewOrm()
 	v := Likes{Id: id}
 	// ascertain id exists in the database
