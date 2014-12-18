@@ -3,6 +3,8 @@ package helper
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"log"
 	"reflect"
 	"strconv"
 	"time"
@@ -45,6 +47,30 @@ func Reponse(errCode int, data interface{}, msg string) DataResponse {
 
 func GetTodayDate() string {
 	return time.Now().Format("2006-01-02")
+}
+
+func GetTimeAgo(timeStamp int64) (timeAgo string) {
+	currentTime := time.Now().Unix()
+	diffTime := currentTime - timeStamp
+	log.Println(diffTime)
+	if diffTime < 60 {
+		return fmt.Sprintf("%d seconds ago.", diffTime)
+	}
+	if diffTime >= 60 && diffTime < 3600 {
+
+		currentTime := time.Unix(diffTime, 0)
+		return fmt.Sprintf("%d minutes ago.", currentTime.Minute())
+	}
+	if diffTime >= 3600 && diffTime < 3600*24 {
+		currentTime := time.Unix(diffTime, 0)
+		return fmt.Sprintf("%d hours ago.", currentTime.Hour())
+	}
+	if diffTime >= 3600*24 {
+		currentTime := time.Unix(diffTime, 0)
+		return fmt.Sprintf("%d days ago.", currentTime.Day())
+	}
+
+	return timeAgo
 }
 
 func GetMd5(str string) string {

@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"pet/utils"
 	"reflect"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ type PhotosApi struct {
 	Id        int64
 	Title     string
 	Path      string
-	CreatedAt int64
+	CreatedAt string
 	User      *UsersApi
 	Likes     int64
 	Comments  int64
@@ -41,7 +42,7 @@ func ConverToPhotoApiStruct(m *Photos, meta ...interface{}) (data *PhotosApi) {
 	data = new(PhotosApi)
 	data.Id = m.Id
 	data.Title = m.Title
-	data.CreatedAt = m.CreatedAt.Unix()
+	data.CreatedAt = helper.GetTimeAgo(m.CreatedAt.Unix())
 	data.User = ConverToUserApiStruct(m.User)
 	data.Likes = m.Likes
 	data.Path = m.Path
