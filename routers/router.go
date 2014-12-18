@@ -58,6 +58,12 @@ func init() {
 				&controllers.FeedbackController{},
 			),
 		),
+		beego.NSNamespace("/link",
+			beego.NSInclude(
+				&controllers.LinksController{},
+			),
+			beego.NSRouter("/appstore", &controllers.LinksController{}, "get:AppStore"),
+		),
 		beego.NSNamespace("/users",
 			beego.NSRouter("/login", &controllers.UsersController{}, "get:Login"),
 			beego.NSRouter("/logout", &controllers.UsersController{}, "get:Logout"),
