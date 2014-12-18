@@ -30,13 +30,14 @@ type PhotosApi struct {
 	User      *UsersApi
 	Likes     int64
 	Comments  int64
+	HasLiked  bool
 }
 
 func init() {
 	orm.RegisterModel(new(Photos))
 }
 
-func ConverToPhotoApiStruct(m *Photos) (data *PhotosApi) {
+func ConverToPhotoApiStruct(m *Photos, meta ...interface{}) (data *PhotosApi) {
 	data = new(PhotosApi)
 	data.Id = m.Id
 	data.Title = m.Title
@@ -45,7 +46,10 @@ func ConverToPhotoApiStruct(m *Photos) (data *PhotosApi) {
 	data.Likes = m.Likes
 	data.Path = m.Path
 	data.Comments = GetPhotosCommentCount(m.Id)
-
+	if len(meta) > 0 {
+		user := meta[0].(*Users)
+		data.HasLiked = HasLikedPhoto(m.Id, user.Id)
+	}
 	return data
 }
 

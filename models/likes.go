@@ -174,6 +174,13 @@ func DeleteLikedPhoto(userId, photoId int64) (num int64, err error) {
 	return num, err
 }
 
+func HasLikedPhoto(photoId, userId int64) (hasLiked bool) {
+	o := orm.NewOrm()
+	exist := o.QueryTable(new(Likes)).Filter("target_id", photoId).Filter("user_id", userId).Exist()
+
+	return exist
+}
+
 func GetUsersByLikesPhoto(photoId int64) (usersList []*LikesUsersApi, err error) {
 
 	var lists []orm.Params

@@ -161,6 +161,15 @@ func (this *PhotosController) GetAll() {
 	var photoApiDatas []*models.PhotosApi
 	var photo models.Photos
 
+	userServerSession := this.GetSession("user")
+
+	var currentUserSession models.Users
+	if userServerSession == nil {
+		currentUserSession = *new(models.Users)
+	} else {
+		currentUserSession = userServerSession.(models.Users)
+	}
+
 	for _, v := range photos {
 		photo.Title = v["Title"].(string)
 		photo.Id = v["Id"].(int64)
@@ -168,7 +177,7 @@ func (this *PhotosController) GetAll() {
 		photo.CreatedAt = v["CreatedAt"].(time.Time)
 		photo.Path = v["Path"].(string)
 		photo.User, _ = models.GetUsersById(v["User__User"].(int64))
-		photoApiData := models.ConverToPhotoApiStruct(&photo)
+		photoApiData := models.ConverToPhotoApiStruct(&photo, &currentUserSession)
 		photoApiDatas = append(photoApiDatas, photoApiData)
 	}
 	if len(photoApiDatas) == 0 {
