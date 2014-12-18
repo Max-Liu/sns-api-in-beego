@@ -184,3 +184,8 @@ func DeleteUserRelationsByUsers(follower, following int64) (num int64, err error
 	}
 	return num, err
 }
+func HasFollowed(targetId, currentId int64) (exist bool) {
+	o := orm.NewOrm()
+	exist = o.QueryTable(new(UserRelations)).Filter("following", targetId).Filter("follower", currentId).Exist()
+	return exist
+}

@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"pet/models"
-	"pet/utils"
+	helper "pet/utils"
 	"strconv"
 	"time"
 
@@ -396,5 +396,22 @@ func (this *UserRelationsController) Following() {
 		outPut := helper.Reponse(0, data, "")
 		this.Data["json"] = outPut
 	}
+	this.ServeJson()
+}
+
+// @Title 是否已关注
+// @Description 是否已关注
+// @Param	user_id	query	string	false	"目标用户id"
+// @Success 200 {object} models.UserRelations
+// @Failure 403
+// @router /has_followed [get]
+func (this *UserRelationsController) HasFollowed() {
+	userId, _ := this.GetInt64("user_id")
+	currentUser := this.GetSession("user").(models.Users)
+	hasFollowed := models.HasFollowed(userId, currentUser.Id)
+	resp := make(map[string]interface{})
+	resp["hasFollowed"] = hasFollowed
+	outPut := helper.Reponse(0, resp, "")
+	this.Data["json"] = outPut
 	this.ServeJson()
 }
