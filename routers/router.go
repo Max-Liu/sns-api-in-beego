@@ -31,7 +31,6 @@ func init() {
 		),
 
 		beego.NSNamespace("/photos",
-			beego.NSRouter("/following", &controllers.PhotosController{}, "get:GetFollowingPhotosTimeline"),
 			beego.NSRouter("/top10", &controllers.PhotosController{}, "get:GetTop10"),
 			beego.NSInclude(
 				&controllers.PhotosController{},
@@ -51,6 +50,7 @@ func init() {
 			beego.NSInclude(
 				&controllers.MsgController{},
 			),
+			beego.NSRouter("/following", &controllers.MsgController{}, "get:GetFollowingPhotosTimeline"),
 		),
 
 		beego.NSNamespace("/feedback",

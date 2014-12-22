@@ -264,47 +264,6 @@ func PushPhotoToFollowerTimelime(userId, photoId int64) {
 	}
 }
 
-// @Title 获取关注的人照片timeline
-// @Description 获取关注的人照片timeline
-// @Param	offset	query	string	false	"结果列表索引"
-// @Success 200 {object} models.Timeline
-// @Failure 403
-// @router /timeline/following [get]
-func (this *PhotosController) GetFollowingPhotosTimeline() {
-
-	data := make(map[string]interface{})
-
-	if v, err := this.GetInt("offset"); err == nil {
-		offset = int64(v)
-	}
-
-	userSession := this.GetSession("user").(models.Users)
-	userId := userSession.Id
-
-	l, err := models.GetFollowingPhotos(userId, offset, limit)
-	oneMore, _ := models.GetFollowingPhotos(userId, offset+limit, 1)
-	if len(oneMore) == 0 {
-		data["Has_more"] = 0
-
-	} else {
-		data["Has_more"] = 1
-	}
-	if len(l) == 0 {
-		data["Timeline"] = ""
-	} else {
-		data["Timeline"] = l
-	}
-
-	if err != nil {
-		outPut := helper.Reponse(1, nil, err.Error())
-		this.Data["json"] = outPut
-	} else {
-		outPut := helper.Reponse(0, data, "")
-		this.Data["json"] = outPut
-	}
-	this.ServeJson()
-}
-
 // @Title 获取Top10
 // @Description 获取照片Top10
 // @Success

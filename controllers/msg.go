@@ -17,7 +17,7 @@ func (c *MsgController) URLMapping() {
 	c.Mapping("GetAll", c.GetAll)
 }
 
-// @Title 获取动态列表
+// @Title 获取我的动态列表
 // @Description 获取动态列表
 // @Param	offset	query	string	false	"列表索引"
 // @Success 200 {object} models.Msg
@@ -31,6 +31,7 @@ func (this *MsgController) GetAll() {
 	userSession := this.GetSession("user").(models.Users)
 	userIdStr := strconv.FormatInt(userSession.Id, 10)
 	msgList := models.GetMsgPhotoApiData(userIdStr, offset, limit)
+
 	if len(msgList) == 0 {
 		data["Message"] = ""
 	} else {
@@ -46,6 +47,47 @@ func (this *MsgController) GetAll() {
 
 	outPut := helper.Reponse(0, data, "")
 	this.Data["json"] = outPut
+	this.ServeJson()
+}
+
+// @Title 获取关注的人动态
+// @Description 获取关注的人动态
+// @Param	offset	query	string	false	"结果列表索引"
+// @Success 200 {object} models.Timeline
+// @Failure 403
+// @router /following [get]
+func (this *MsgController) GetFollowingPhotosTimeline() {
+
+	data := make(map[string]interface{})
+
+	if v, err := this.GetInt("offset"); err == nil {
+		offset = int64(v)
+	}
+
+	userSession := this.GetSession("user").(models.Users)
+	userId := userSession.Id
+
+	l, err := models.GetFollowingMsgPhotos(userId, offset, limit)
+	oneMore, _ := models.GetFollowingMsgPhotos(userId, offset+limit, 1)
+	if len(oneMore) == 0 {
+		data["Has_more"] = 0
+
+	} else {
+		data["Has_more"] = 1
+	}
+	if len(l) == 0 {
+		data["Timeline"] = ""
+	} else {
+		data["Timeline"] = l
+	}
+
+	if err != nil {
+		outPut := helper.Reponse(1, nil, err.Error())
+		this.Data["json"] = outPut
+	} else {
+		outPut := helper.Reponse(0, data, "")
+		this.Data["json"] = outPut
+	}
 	this.ServeJson()
 }
 
