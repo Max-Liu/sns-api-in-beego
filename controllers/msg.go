@@ -17,8 +17,8 @@ func (c *MsgController) URLMapping() {
 	c.Mapping("GetAll", c.GetAll)
 }
 
-// @Title 获取通知列表
-// @Description 获取通知列表
+// @Title 获取动态列表
+// @Description 获取动态列表
 // @Param	offset	query	string	false	"列表索引"
 // @Success 200 {object} models.Msg
 // @Failure 403
@@ -45,6 +45,19 @@ func (this *MsgController) GetAll() {
 	}
 
 	outPut := helper.Reponse(0, data, "")
+	this.Data["json"] = outPut
+	this.ServeJson()
+}
+
+// @Title 是否有新通知
+// @Description 是否有新通知
+// @Success 200 {object} models.Msg
+// @Failure 403
+// @router /has_notice [get]
+func (this *MsgController) HasNotice() {
+	resp := make(map[string]interface{})
+	resp["HasNotice"] = true
+	outPut := helper.Reponse(0, resp, "")
 	this.Data["json"] = outPut
 	this.ServeJson()
 }

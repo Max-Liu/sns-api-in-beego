@@ -18,11 +18,13 @@ type Articles struct {
 	TitleImage string    `orm:"column(title_image);null"`
 }
 type ArticlesApi struct {
-	Id         int64
-	Title      string
-	Content    string
-	CreatedAt  int64
-	TitleImage string
+	Id          int64
+	Title       string
+	Content     string
+	CreatedAt   int64
+	TitleImage  string
+	ImageWidth  int
+	ImageHeight int
 }
 
 func ConverToArticleApiStruct(m *Articles) (data *ArticlesApi) {
@@ -32,6 +34,8 @@ func ConverToArticleApiStruct(m *Articles) (data *ArticlesApi) {
 	data.Content = m.Content
 	data.CreatedAt = m.CreatedAt.Unix()
 	data.TitleImage = m.TitleImage
+	data.ImageWidth = 800
+	data.ImageHeight = 800
 	return data
 }
 
