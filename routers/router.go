@@ -50,6 +50,7 @@ func init() {
 			beego.NSInclude(
 				&controllers.MsgController{},
 			),
+			beego.NSRouter("/me", &controllers.MsgController{}, "get:Me"),
 			beego.NSRouter("/following", &controllers.MsgController{}, "get:GetFollowingPhotosTimeline"),
 		),
 

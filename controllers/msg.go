@@ -14,16 +14,16 @@ type MsgController struct {
 }
 
 func (c *MsgController) URLMapping() {
-	c.Mapping("GetAll", c.GetAll)
+	//c.Mapping("GetAll", c.GetAll)
 }
 
 // @Title 获取我的动态列表
-// @Description 获取动态列表
+// @Description 获取我的动态列表
 // @Param	offset	query	string	false	"列表索引"
 // @Success 200 {object} models.Msg
 // @Failure 403
-// @router / [get]
-func (this *MsgController) GetAll() {
+// @router /me [get]
+func (this *MsgController) Me() {
 	data := make(map[string]interface{})
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
