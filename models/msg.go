@@ -69,8 +69,6 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 			if reflect.ValueOf(photoMsgMap["Id"]).Kind().String() == "int64" {
 				photo, _ := GetPhotosById(photoMsgMap["Id"].(int64))
 				msgPhotoApi.Photo = ConverToPhotoApiStruct(photo)
-			} else {
-				msgPhotoApi.Photo = new(PhotosApi)
 			}
 			msgList = append(msgList, msgPhotoApi)
 		}
@@ -82,8 +80,6 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 			if reflect.ValueOf(photoMsgMap["Id"]).Kind().String() == "int64" {
 				photo, _ := GetPhotosById(photoMsgMap["Id"].(int64))
 				msgPhotoApi.Photo = ConverToPhotoApiStruct(photo)
-			} else {
-				msgPhotoApi.Photo = new(PhotosApi)
 			}
 
 			user, _ := GetUsersById(int64(photoMsgMap["UserId"].(float64)))
@@ -152,8 +148,6 @@ func GetFollowingMsgPhotos(userId int64, offset int64, limit int64) ([]*MsgPhoto
 		if reflect.ValueOf(v["Id"]).Kind().String() == "int64" {
 			photo, _ := GetPhotosById(v["Id"].(int64))
 			msgPhoto.Photo = ConverToPhotoApiStruct(photo)
-		} else {
-			msgPhoto.Photo = new(PhotosApi)
 		}
 
 		photoApiDatas = append(photoApiDatas, msgPhoto)
