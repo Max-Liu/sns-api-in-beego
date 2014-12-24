@@ -11,6 +11,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/beego/redigo/redis"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type Msg struct {
@@ -24,6 +25,7 @@ type MsgPhoto struct {
 	Content   string
 	UserId    int64
 	CreatedAt int64
+	PhotoId   int64
 }
 type MsgPhotoApi struct {
 	PhotoPath string
@@ -31,6 +33,7 @@ type MsgPhotoApi struct {
 	CreatedAt string
 	HeadImage string
 	UserId    int64
+	Photo     *PhotosApi
 }
 
 func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
@@ -62,12 +65,27 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 			msgPhotoApi.HeadImage = user.Head
 			msgPhotoApi.CreatedAt = helper.GetTimeAgo(int64(photoMsgMap["CreatedAt"].(float64)))
 			msgPhotoApi.UserId = user.Id
+
+			if reflect.ValueOf(photoMsgMap["Id"]).Kind().String() == "int64" {
+				photo, _ := GetPhotosById(photoMsgMap["Id"].(int64))
+				msgPhotoApi.Photo = ConverToPhotoApiStruct(photo)
+			} else {
+				msgPhotoApi.Photo = new(PhotosApi)
+			}
 			msgList = append(msgList, msgPhotoApi)
 		}
 		if msg.Kind == 1 {
 			photoMsgMap := msg.Object.(map[string]interface{})
+			spew.Dump(photoMsgMap)
 			msgPhotoApi := new(MsgPhotoApi)
 			msgPhotoApi.PhotoPath = photoMsgMap["PhotoPath"].(string)
+			if reflect.ValueOf(photoMsgMap["Id"]).Kind().String() == "int64" {
+				photo, _ := GetPhotosById(photoMsgMap["Id"].(int64))
+				msgPhotoApi.Photo = ConverToPhotoApiStruct(photo)
+			} else {
+				msgPhotoApi.Photo = new(PhotosApi)
+			}
+
 			user, _ := GetUsersById(int64(photoMsgMap["UserId"].(float64)))
 			msgPhotoApi.Content = user.Name + "评论了你的照片:" + photoMsgMap["Content"].(string)
 			msgPhotoApi.HeadImage = user.Head
@@ -130,6 +148,13 @@ func GetFollowingMsgPhotos(userId int64, offset int64, limit int64) ([]*MsgPhoto
 		msgPhoto.HeadImage = photo.User.Head
 		msgPhoto.Content = fmt.Sprintf("%s上传了一张照片", photo.User.Name)
 		msgPhoto.UserId = photo.User.Id
+
+		if reflect.ValueOf(v["Id"]).Kind().String() == "int64" {
+			photo, _ := GetPhotosById(v["Id"].(int64))
+			msgPhoto.Photo = ConverToPhotoApiStruct(photo)
+		} else {
+			msgPhoto.Photo = new(PhotosApi)
+		}
 
 		photoApiDatas = append(photoApiDatas, msgPhoto)
 
