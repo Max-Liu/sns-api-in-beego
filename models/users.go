@@ -13,13 +13,13 @@ import (
 type Users struct {
 	Id        int64     `orm:"column(id);auto"`
 	Email     string    `orm:"column(email);size(128);null" form:"email" valid:"Email"`
+	Phone     string    `orm:"column(phone);size(20); null" form:"phone" valid:"Required"`
 	Password  string    `orm:"column(password);size(128);null" form:"password" valid:"Required"`
+	Name      string    `orm:"column(name);size(45);null" form:"name" valid:"Required"`
 	Gender    int       `orm:"column(gender);null" form:"gender"`
-	Phone     string    `orm:"column(phone);size(20);" form:"phone" valid:"Required;Phone"`
 	Birthday  string    `orm:"column(birthday);size(20);null" form:"birthday"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
-	Name      string    `orm:"column(name);size(45);null" form:"name"`
 	Following int64     `orm:"column(following);null"`
 	Follower  int64     `orm:"column(follower);null"`
 	Head      string    `orm:"column(head);null"`

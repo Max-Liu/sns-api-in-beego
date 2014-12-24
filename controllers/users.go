@@ -29,7 +29,11 @@ func (this *UsersController) URLMapping() {
 // @Param	email		form 	String	true		"注册邮箱"
 // @Param	phone		form 	String	true		"注册手机"
 // @Param	name		form 	String	true		"用户名"
-// @Param	password	form 	String	true		"密码"
+// @Param	birthday	form 	String	false		"生日"
+// @Param	gender		form 	Int	false		"性别"
+// @Param	intro		form 	String	false		"简介"
+// @Param	city		form 	String	false		"城市"
+// @Param	password	form 	String	false		"密码"
 // @Success 200 {int} models.Users.Id
 // @Failure 403 body is empty
 // @router /register [post]
@@ -62,7 +66,10 @@ func (this *UsersController) Register() {
 // @Description 更新个人信息
 // @Param	id			path 	string	true		"用户ID"
 // @Param	gender		form	Int		true		"用户性别"
-// @Param	birthday	form	String	true		"生日"
+// @Param	birthday	form 	String	false		"生日"
+// @Param	gender		form 	String	false		"性别"
+// @Param	intro		form 	String	false		"简介"
+// @Param	city		form 	String	false		"城市"
 // @Param	head		form	File	true		"头像图片"
 // @Success 200 {int} models.Users.Id
 // @Failure 403 body is empty
