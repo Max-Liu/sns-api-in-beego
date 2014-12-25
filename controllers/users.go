@@ -27,7 +27,7 @@ func (this *UsersController) URLMapping() {
 // @Title 注册
 // @Description 用户注册
 // @Param	email		form 	String	true		"注册邮箱"
-// @Param	phone		form 	String	true		"注册手机"
+// @Param	phone		form 	String	false		"注册手机"
 // @Param	name		form 	String	true		"用户名"
 // @Param	birthday	form 	String	false		"生日"
 // @Param	gender		form 	Int	false		"性别"
