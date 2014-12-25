@@ -32,7 +32,7 @@ func (this *UsersController) URLMapping() {
 // @Param	birthday	form 	String	false		"生日"
 // @Param	gender		form 	Int	false		"性别"
 // @Param	intro		form 	String	false		"简介"
-// @Param	city		form 	String	false		"城市"
+// @Param	address		form 	String	false		"地址"
 // @Param	password	form 	String	false		"密码"
 // @Success 200 {int} models.Users.Id
 // @Failure 403 body is empty
@@ -69,7 +69,7 @@ func (this *UsersController) Register() {
 // @Param	birthday	form 	String	false		"生日"
 // @Param	gender		form 	String	false		"性别"
 // @Param	intro		form 	String	false		"简介"
-// @Param	city		form 	String	false		"城市"
+// @Param	address		form 	String	false		"地址"
 // @Param	head		form	File	true		"头像图片"
 // @Success 200 {int} models.Users.Id
 // @Failure 403 body is empty
@@ -98,6 +98,8 @@ func (this *UsersController) Put() {
 			genderStr := this.GetString("gender")
 			gender, _ := strconv.Atoi(genderStr)
 			v.Gender = gender
+			v.Address = this.GetString("address")
+			v.Intro = this.GetString("intro")
 
 			todayDateDir := "/" + helper.GetTodayDate()
 			if _, err := os.Stat(uploadPhotoPath + todayDateDir); os.IsNotExist(err) {

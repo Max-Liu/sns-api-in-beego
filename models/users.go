@@ -18,6 +18,8 @@ type Users struct {
 	Name      string    `orm:"column(name);size(45);null" form:"name" valid:"Required"`
 	Gender    int       `orm:"column(gender);null" form:"gender"`
 	Birthday  string    `orm:"column(birthday);size(20);null" form:"birthday"`
+	Intro     string    `orm:"column(intro);size(128);null" form:"intro"`
+	Address   string    `orm:"column(address);size(128);null" form:"address"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 	Following int64     `orm:"column(following);null"`
@@ -38,6 +40,9 @@ type UsersApi struct {
 	Likes     int64
 	Photos    int64
 	HeadImage string
+	Intro     string
+	Address   string
+	Birthday  string
 }
 
 type UserPosition struct {
@@ -72,6 +77,9 @@ func ConverToUserApiStruct(m *Users) (data *UsersApi) {
 	data.Follower = m.Follower
 	data.Following = m.Following
 	data.HeadImage = m.Head
+	data.Birthday = m.Birthday
+	data.Intro = m.Intro
+	data.Address = m.Address
 	return data
 }
 
