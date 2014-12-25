@@ -63,6 +63,8 @@ func (this *LikesController) Post() {
 			this.Data["json"] = outPut
 			models.Notice(userSession.Id, Photo.Id, 0)
 
+			models.NoticeToFriendsTimeline(userSession.Id, 0, Photo.Id, 0)
+
 		} else {
 
 			outPut := helper.Reponse(1, nil, err.Error())

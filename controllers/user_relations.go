@@ -38,7 +38,7 @@ func (this *UserRelationsController) Post() {
 
 	//当前登陆用户ID
 	follower := this.GetSession("user").(models.Users)
-	v.Follower = &follower
+	v.Follower, _ = models.GetUsersById(follower.Id)
 
 	//关注目标的用户ID
 	followingIdStr := this.GetString("following")
@@ -109,6 +109,7 @@ func (this *UserRelationsController) Post() {
 			models.UpdateUsersById(v.Following)
 			data := models.ConverToUserRelationsApiStruct(&v)
 
+			models.NoticeToFriendsTimeline(follower.Id, followingId, 0, 3)
 			outPut := helper.Reponse(0, data, "创建成功")
 			this.Data["json"] = outPut
 		} else {

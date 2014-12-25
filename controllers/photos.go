@@ -71,8 +71,8 @@ func (this *PhotosController) Post() {
 			v.User = &currentUser
 
 			if id, err := models.AddPhotos(&v); err == nil {
-				PushPhotoToFollowerTimelime(currentUser.Id, id)
 				v.Id = id
+				models.NoticeToFriendsTimeline(currentUser.Id, 0, v.Id, 2)
 				data := models.ConverToPhotoApiStruct(&v)
 				outPut := helper.Reponse(0, data, "创建成功")
 				this.Data["json"] = outPut
@@ -237,31 +237,24 @@ func (this *PhotosController) Delete() {
 	//this.ServeJson()
 }
 
-func PushPhotoToFollowerTimelime(userId, photoId int64) {
+func PushPhotoToFollowerTimelime(currentUserId, photoId int64) (err error) {
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {
 		beego.Error(err.Error())
 	}
-	userIdStr := strconv.FormatInt(userId, 10)
-	result, err := c.Do("ZRANGE", "follower:"+userIdStr, 0, -1)
+	currentUserIdStr := strconv.FormatInt(currentUserId, 10)
+	result, err := c.Do("ZRANGE", "follower:"+currentUserIdStr, 0, -1)
 	for _, userId := range result.([]interface{}) {
-		//photo time line
-		userIdStr := string(userId.([]uint8))
-		result, err := c.Do("LPUSH", "ptm:"+userIdStr, photoId)
-		beego.Debug(result)
-		if err != nil {
-			beego.Error(err.Error())
-		}
-		//display the newest 100 photos
-		result, err = c.Do("LTRIM", "ptm:"+userIdStr, 0, 99)
-
-		beego.Debug(result)
+		targetUserIdStr := string(userId.([]uint8))
+		targetUserId, _ := strconv.ParseInt(targetUserIdStr, 10, 0)
+		err = models.NoticeToFriendsTimeline(currentUserId, targetUserId, photoId, 2)
 		if err != nil {
 			beego.Error(err.Error())
 		}
 	}
+	return err
 }
 
 // @Title 获取Top10

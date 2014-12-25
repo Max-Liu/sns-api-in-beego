@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
 	"github.com/beego/redigo/redis"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -20,12 +19,11 @@ type Msg struct {
 	Object interface{}
 }
 
-type MsgPhoto struct {
-	PhotoPath string
-	Content   string
-	UserId    int64
-	CreatedAt int64
-	PhotoId   int64
+type MsgInCache struct {
+	UserId       int64
+	TargetUserId int64
+	PhotoId      int64
+	CreatedAt    int64
 }
 type MsgPhotoApi struct {
 	PhotoPath string
@@ -34,6 +32,14 @@ type MsgPhotoApi struct {
 	HeadImage string
 	UserId    int64
 	Photo     *PhotosApi
+}
+
+type MsgTimelineApi struct {
+	Photo                   *PhotosApi
+	FollowingUser           *UsersApi
+	FollowingUserTargetUser *UsersApi
+	CreatedAt               string
+	Content                 string
 }
 
 func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
@@ -74,7 +80,6 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 		}
 		if msg.Kind == 1 {
 			photoMsgMap := msg.Object.(map[string]interface{})
-			spew.Dump(photoMsgMap)
 			msgPhotoApi := new(MsgPhotoApi)
 			msgPhotoApi.PhotoPath = photoMsgMap["PhotoPath"].(string)
 			if reflect.ValueOf(photoMsgMap["Id"]).Kind().String() == "int64" {
@@ -93,67 +98,119 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 	return msgList
 }
 
-func GetFollowingMsgPhotos(userId int64, offset int64, limit int64) ([]*MsgPhotoApi, error) {
-	var photoApiDatas []*MsgPhotoApi
-	var photo Photos
+func GetFollowingTimeline(currentUserId int64, offset int64, limit int64) ([]*MsgTimelineApi, error) {
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {
 		beego.Error(err.Error())
 	}
-	userIdStr := strconv.FormatInt(userId, 10)
-	result, err := c.Do("LRANGE", "ptm:"+userIdStr, offset, offset+limit)
+	currentUserIdStr := strconv.FormatInt(currentUserId, 10)
+	msgListInterface, err := c.Do("ZREVRANGE", "ftm:"+currentUserIdStr, offset, offset+limit)
 
+	var msgList []*MsgTimelineApi
+
+	spew.Dump(msgListInterface)
+	for _, v := range msgListInterface.([]interface{}) {
+		var msg Msg
+		err := json.Unmarshal(v.([]uint8), &msg)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+
+		if msg.Kind == 0 {
+			msgMap := msg.Object.(map[string]interface{})
+			msgApi := new(MsgTimelineApi)
+
+			photoId := int64(msgMap["PhotoId"].(float64))
+			photo, _ := GetPhotosById(photoId)
+			msgApi.Photo = ConverToPhotoApiStruct(photo)
+
+			msgApi.CreatedAt = helper.GetTimeAgo(int64(msgMap["CreatedAt"].(float64)))
+
+			sourceUserId := int64(msgMap["UserId"].(float64))
+			sourceUser, _ := GetUsersById(sourceUserId)
+			msgApi.FollowingUser = ConverToUserApiStruct(sourceUser)
+
+			msgApi.Content = fmt.Sprintf("%s 喜欢了一张照片", sourceUser.Name)
+			msgList = append(msgList, msgApi)
+		}
+		if msg.Kind == 3 {
+			msgMap := msg.Object.(map[string]interface{})
+			msgApi := new(MsgTimelineApi)
+
+			userId := int64(msgMap["UserId"].(float64))
+			targetUserId := int64(msgMap["TargetUserId"].(float64))
+
+			sourceUser, _ := GetUsersById(userId)
+			targetUser, _ := GetUsersById(targetUserId)
+
+			msgApi.FollowingUser = ConverToUserApiStruct(sourceUser)
+			msgApi.FollowingUserTargetUser = ConverToUserApiStruct(targetUser)
+
+			msgApi.CreatedAt = helper.GetTimeAgo(int64(msgMap["CreatedAt"].(float64)))
+			msgApi.Content = fmt.Sprintf("%s 关注了用户 %s", sourceUser.Name, targetUser.Name)
+			msgList = append(msgList, msgApi)
+		}
+
+		if msg.Kind == 2 {
+			msgMap := msg.Object.(map[string]interface{})
+			msgApi := new(MsgTimelineApi)
+
+			photoId := int64(msgMap["PhotoId"].(float64))
+			photo, _ := GetPhotosById(photoId)
+
+			msgApi.Photo = ConverToPhotoApiStruct(photo)
+			userId := int64(msgMap["UserId"].(float64))
+			sourceUser, _ := GetUsersById(userId)
+			msgApi.FollowingUser = ConverToUserApiStruct(sourceUser)
+			msgApi.CreatedAt = helper.GetTimeAgo(int64(msgMap["CreatedAt"].(float64)))
+			msgApi.Content = fmt.Sprintf("%s 上传了一张照片", sourceUser.Name)
+			msgList = append(msgList, msgApi)
+		}
+	}
+	return msgList, nil
+}
+
+func NoticeToFriendsTimeline(currentUserId, targetUserId, photoId int64, kind int, content ...string) (err error) {
+
+	redisAddress, _ := beego.Config("String", "redisServer", "")
+	c, err := redis.Dial("tcp", redisAddress.(string))
+	defer c.Close()
 	if err != nil {
 		beego.Error(err.Error())
 	}
 
-	if reflect.TypeOf(result).String() == "[]interface {}" {
-		if reflect.ValueOf(result).Len() == 0 {
-			return photoApiDatas, nil
+	var msgInCache *MsgInCache
 
+	msgInCache = &MsgInCache{
+		UserId:       currentUserId,
+		TargetUserId: targetUserId,
+		PhotoId:      photoId,
+		CreatedAt:    time.Now().Unix(),
+	}
+
+	msg := new(Msg)
+	msg.Kind = kind
+	msg.Object = msgInCache
+	b, _ := json.Marshal(msg)
+
+	//get User's followers
+	currentUserIdStr := strconv.FormatInt(currentUserId, 10)
+	result, err := c.Do("ZRANGE", "follower:"+currentUserIdStr, 0, -1)
+	for _, userId := range result.([]interface{}) {
+		followerUserIdStr := string(userId.([]uint8))
+		_, err = c.Do("ZADD", "ftm:"+followerUserIdStr, time.Now().Unix(), string(b))
+		if err != nil {
+			beego.Error(err.Error())
 		}
 	}
 
-	var photoIdList []string
-	for _, photoId := range result.([]interface{}) {
-
-		photoIdList = append(photoIdList, string(photoId.([]uint8)))
-
+	//friends timeline
+	if err != nil {
+		beego.Error(err.Error())
 	}
-	o := orm.NewOrm()
-	qs := o.QueryTable("photos")
-	var lists []orm.Params
-	qs.Filter("id__in", photoIdList).Values(&lists)
-
-	msgPhoto := new(MsgPhotoApi)
-
-	for _, v := range lists {
-		photo.CreatedAt = v["CreatedAt"].(time.Time)
-		photo.Id = v["Id"].(int64)
-		photo.Likes = v["Likes"].(int64)
-		photo.Path = v["Path"].(string)
-		photo.Title = v["Title"].(string)
-		photo.User, _ = GetUsersById(v["User"].(int64))
-
-		photoApiData := ConverToPhotoApiStruct(&photo)
-
-		msgPhoto.PhotoPath = photoApiData.Path
-		msgPhoto.CreatedAt = photoApiData.CreatedAt
-		msgPhoto.HeadImage = photo.User.Head
-		msgPhoto.Content = fmt.Sprintf("%s上传了一张照片", photo.User.Name)
-		msgPhoto.UserId = photo.User.Id
-
-		if reflect.ValueOf(v["Id"]).Kind().String() == "int64" {
-			photo, _ := GetPhotosById(v["Id"].(int64))
-			msgPhoto.Photo = ConverToPhotoApiStruct(photo)
-		}
-
-		photoApiDatas = append(photoApiDatas, msgPhoto)
-
-	}
-	return photoApiDatas, err
+	return err
 }
 
 func Notice(source, target int64, kind int, content ...string) (err error) {
@@ -169,8 +226,7 @@ func Notice(source, target int64, kind int, content ...string) (err error) {
 	case 0:
 		{
 			photo, _ := GetPhotosById(target)
-			msgPhoto := &MsgPhoto{
-				PhotoPath: photo.Path,
+			msgPhoto := &MsgInCache{
 				UserId:    sourceUser.Id,
 				CreatedAt: time.Now().Unix(),
 			}
@@ -188,11 +244,10 @@ func Notice(source, target int64, kind int, content ...string) (err error) {
 	case 1:
 		{
 			photo, _ := GetPhotosById(target)
-			msgPhoto := &MsgPhoto{
-				PhotoPath: photo.Path,
+			msgPhoto := &MsgInCache{
 				UserId:    sourceUser.Id,
 				CreatedAt: time.Now().Unix(),
-				Content:   content[0],
+				//Content:   content[0],
 			}
 			msg := new(Msg)
 			msg.Kind = 1

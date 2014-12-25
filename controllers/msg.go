@@ -27,7 +27,10 @@ func (this *MsgController) Me() {
 	data := make(map[string]interface{})
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
+	} else {
+		offset = 0
 	}
+
 	userSession := this.GetSession("user").(models.Users)
 	userIdStr := strconv.FormatInt(userSession.Id, 10)
 	msgList := models.GetMsgPhotoApiData(userIdStr, offset, limit)
@@ -62,13 +65,15 @@ func (this *MsgController) GetFollowingPhotosTimeline() {
 
 	if v, err := this.GetInt("offset"); err == nil {
 		offset = int64(v)
+	} else {
+		offset = 0
 	}
 
 	userSession := this.GetSession("user").(models.Users)
 	userId := userSession.Id
 
-	l, err := models.GetFollowingMsgPhotos(userId, offset, limit)
-	oneMore, _ := models.GetFollowingMsgPhotos(userId, offset+limit, 1)
+	l, err := models.GetFollowingTimeline(userId, offset, limit)
+	oneMore, _ := models.GetFollowingTimeline(userId, offset+limit, 1)
 	if len(oneMore) == 0 {
 		data["Has_more"] = 0
 

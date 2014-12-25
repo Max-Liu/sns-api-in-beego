@@ -38,7 +38,6 @@ type UsersApi struct {
 	Likes     int64
 	Photos    int64
 	HeadImage string
-	Pwd       string
 }
 
 type UserPosition struct {
@@ -73,7 +72,6 @@ func ConverToUserApiStruct(m *Users) (data *UsersApi) {
 	data.Follower = m.Follower
 	data.Following = m.Following
 	data.HeadImage = m.Head
-	data.Pwd = m.Password
 	return data
 }
 
