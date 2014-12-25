@@ -56,8 +56,8 @@ func (this *PhotoCommentsController) Post() {
 		userSession := this.GetSession("user").(models.Users)
 		v.User = &userSession
 
-		if _, err := models.AddPhotoComments(&v); err == nil {
-			models.Notice(userSession.Id, photoId, 1, v.Content)
+		if id, err := models.AddPhotoComments(&v); err == nil {
+			models.Notice(userSession.Id, photoId, 1, id)
 			outPut := helper.Reponse(0, nil, "发表成功")
 			this.Data["json"] = outPut
 

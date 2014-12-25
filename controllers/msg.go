@@ -33,7 +33,7 @@ func (this *MsgController) Me() {
 
 	userSession := this.GetSession("user").(models.Users)
 	userIdStr := strconv.FormatInt(userSession.Id, 10)
-	msgList := models.GetMsgPhotoApiData(userIdStr, offset, limit)
+	msgList := models.GetMsgToMe(userIdStr, offset, limit)
 
 	if len(msgList) == 0 {
 		data["Message"] = ""
@@ -41,7 +41,7 @@ func (this *MsgController) Me() {
 
 		data["Message"] = msgList
 	}
-	oneMore := models.GetMsgPhotoApiData(userIdStr, offset+limit, 1)
+	oneMore := models.GetMsgToMe(userIdStr, offset+limit, 1)
 	if len(oneMore) == 0 {
 		data["Has_more"] = 0
 	} else {

@@ -110,7 +110,9 @@ func (this *UserRelationsController) Post() {
 			data := models.ConverToUserRelationsApiStruct(&v)
 
 			models.NoticeToFriendsTimeline(follower.Id, followingId, 0, 3)
+			models.Notice(follower.Id, followingId, 3)
 			outPut := helper.Reponse(0, data, "创建成功")
+
 			this.Data["json"] = outPut
 		} else {
 			outPut := helper.Reponse(1, nil, err.Error())

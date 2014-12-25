@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"pet/utils"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -20,12 +19,12 @@ type Msg struct {
 }
 
 type MsgInCache struct {
-	UserId       int64
-	TargetUserId int64
-	PhotoId      int64
-	CreatedAt    int64
+	UserId    int64
+	TargetId  int64
+	PhotoId   int64
+	CreatedAt int64
 }
-type MsgPhotoApi struct {
+type MsgMeApi struct {
 	PhotoPath string
 	Content   string
 	CreatedAt string
@@ -42,7 +41,7 @@ type MsgTimelineApi struct {
 	Content                 string
 }
 
-func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
+func GetMsgToMe(userIdStr string, offset, limit int64) []*MsgMeApi {
 
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
@@ -53,7 +52,7 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 
 	msgListInterface, err := c.Do("ZREVRANGE", "msg:"+userIdStr, offset, offset+limit)
 
-	var msgList []*MsgPhotoApi
+	var msgList []*MsgMeApi
 
 	for _, v := range msgListInterface.([]interface{}) {
 		var msg Msg
@@ -63,36 +62,57 @@ func GetMsgPhotoApiData(userIdStr string, offset, limit int64) []*MsgPhotoApi {
 		}
 
 		if msg.Kind == 0 {
-			photoMsgMap := msg.Object.(map[string]interface{})
-			msgPhotoApi := new(MsgPhotoApi)
-			msgPhotoApi.PhotoPath = photoMsgMap["PhotoPath"].(string)
-			user, _ := GetUsersById(int64(photoMsgMap["UserId"].(float64)))
-			msgPhotoApi.Content = user.Name + "喜欢了你的照片"
-			msgPhotoApi.HeadImage = user.Head
-			msgPhotoApi.CreatedAt = helper.GetTimeAgo(int64(photoMsgMap["CreatedAt"].(float64)))
-			msgPhotoApi.UserId = user.Id
+			msgMap := msg.Object.(map[string]interface{})
+			msgMeApi := new(MsgMeApi)
+			spew.Dump(msgMap)
 
-			if reflect.ValueOf(photoMsgMap["Id"]).Kind().String() == "int64" {
-				photo, _ := GetPhotosById(photoMsgMap["Id"].(int64))
-				msgPhotoApi.Photo = ConverToPhotoApiStruct(photo)
-			}
-			msgList = append(msgList, msgPhotoApi)
+			photoId := int64(msgMap["PhotoId"].(float64))
+			photo, _ := GetPhotosById(photoId)
+			photoApi := ConverToPhotoApiStruct(photo)
+
+			msgMeApi.PhotoPath = photo.Path
+
+			user, _ := GetUsersById(int64(msgMap["UserId"].(float64)))
+
+			msgMeApi.Content = user.Name + "喜欢了你的照片"
+			msgMeApi.HeadImage = user.Head
+			msgMeApi.UserId = user.Id
+			msgMeApi.CreatedAt = helper.GetTimeAgo(int64(msgMap["CreatedAt"].(float64)))
+			msgMeApi.Photo = photoApi
+			msgList = append(msgList, msgMeApi)
 		}
 		if msg.Kind == 1 {
-			photoMsgMap := msg.Object.(map[string]interface{})
-			msgPhotoApi := new(MsgPhotoApi)
-			msgPhotoApi.PhotoPath = photoMsgMap["PhotoPath"].(string)
-			if reflect.ValueOf(photoMsgMap["Id"]).Kind().String() == "int64" {
-				photo, _ := GetPhotosById(photoMsgMap["Id"].(int64))
-				msgPhotoApi.Photo = ConverToPhotoApiStruct(photo)
-			}
+			msgMap := msg.Object.(map[string]interface{})
+			msgMeApi := new(MsgMeApi)
 
-			user, _ := GetUsersById(int64(photoMsgMap["UserId"].(float64)))
-			msgPhotoApi.Content = user.Name + "评论了你的照片:" + photoMsgMap["Content"].(string)
-			msgPhotoApi.HeadImage = user.Head
-			msgPhotoApi.UserId = user.Id
-			msgPhotoApi.CreatedAt = helper.GetTimeAgo(int64(photoMsgMap["CreatedAt"].(float64)))
-			msgList = append(msgList, msgPhotoApi)
+			photoId := int64(msgMap["PhotoId"].(float64))
+			photo, _ := GetPhotosById(photoId)
+			photoApi := ConverToPhotoApiStruct(photo)
+
+			msgMeApi.PhotoPath = photo.Path
+
+			user, _ := GetUsersById(int64(msgMap["UserId"].(float64)))
+
+			commentId := int64(msgMap["TargetId"].(float64))
+			comment, _ := GetPhotoCommentsById(commentId)
+			msgMeApi.Content = user.Name + "评论了你的照片:" + comment.Content
+			msgMeApi.HeadImage = user.Head
+			msgMeApi.UserId = user.Id
+			msgMeApi.CreatedAt = helper.GetTimeAgo(int64(msgMap["CreatedAt"].(float64)))
+			msgMeApi.Photo = photoApi
+			msgList = append(msgList, msgMeApi)
+		}
+		if msg.Kind == 3 {
+			msgMap := msg.Object.(map[string]interface{})
+			msgMeApi := new(MsgMeApi)
+
+			user, _ := GetUsersById(int64(msgMap["UserId"].(float64)))
+
+			msgMeApi.Content = user.Name + "喜欢了你关注了"
+			msgMeApi.HeadImage = user.Head
+			msgMeApi.UserId = user.Id
+			msgMeApi.CreatedAt = helper.GetTimeAgo(int64(msgMap["CreatedAt"].(float64)))
+			msgList = append(msgList, msgMeApi)
 		}
 	}
 	return msgList
@@ -184,10 +204,10 @@ func NoticeToFriendsTimeline(currentUserId, targetUserId, photoId int64, kind in
 	var msgInCache *MsgInCache
 
 	msgInCache = &MsgInCache{
-		UserId:       currentUserId,
-		TargetUserId: targetUserId,
-		PhotoId:      photoId,
-		CreatedAt:    time.Now().Unix(),
+		UserId:    currentUserId,
+		TargetId:  targetUserId,
+		PhotoId:   photoId,
+		CreatedAt: time.Now().Unix(),
 	}
 
 	msg := new(Msg)
@@ -213,21 +233,21 @@ func NoticeToFriendsTimeline(currentUserId, targetUserId, photoId int64, kind in
 	return err
 }
 
-func Notice(source, target int64, kind int, content ...string) (err error) {
+func Notice(source, target int64, kind int, ext ...int64) (err error) {
 	redisAddress, _ := beego.Config("String", "redisServer", "")
 	c, err := redis.Dial("tcp", redisAddress.(string))
 	defer c.Close()
 	if err != nil {
 		beego.Error(err.Error())
 	}
-	sourceUser, _ := GetUsersById(source)
 
 	switch kind {
 	case 0:
 		{
 			photo, _ := GetPhotosById(target)
 			msgPhoto := &MsgInCache{
-				UserId:    sourceUser.Id,
+				UserId:    source,
+				PhotoId:   target,
 				CreatedAt: time.Now().Unix(),
 			}
 			msg := new(Msg)
@@ -245,9 +265,10 @@ func Notice(source, target int64, kind int, content ...string) (err error) {
 		{
 			photo, _ := GetPhotosById(target)
 			msgPhoto := &MsgInCache{
-				UserId:    sourceUser.Id,
+				UserId:    source,
+				TargetId:  ext[0],
+				PhotoId:   target,
 				CreatedAt: time.Now().Unix(),
-				//Content:   content[0],
 			}
 			msg := new(Msg)
 			msg.Kind = 1
@@ -255,6 +276,25 @@ func Notice(source, target int64, kind int, content ...string) (err error) {
 			b, _ := json.Marshal(msg)
 
 			sourceUserIdStr := strconv.FormatInt(photo.User.Id, 10)
+			_, err := c.Do("ZADD", "msg:"+sourceUserIdStr, time.Now().Unix(), string(b))
+			if err != nil {
+				beego.Error(err.Error())
+			}
+		}
+	case 3:
+		{
+			msgPhoto := &MsgInCache{
+				UserId:    source,
+				TargetId:  target,
+				CreatedAt: time.Now().Unix(),
+			}
+			msg := new(Msg)
+			msg.Kind = 3
+			msg.Object = msgPhoto
+			b, _ := json.Marshal(msg)
+
+			sourceUserIdStr := strconv.FormatInt(target, 10)
+
 			_, err := c.Do("ZADD", "msg:"+sourceUserIdStr, time.Now().Unix(), string(b))
 			if err != nil {
 				beego.Error(err.Error())

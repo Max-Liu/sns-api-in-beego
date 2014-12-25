@@ -10,7 +10,7 @@ import (
 )
 
 type PhotoComments struct {
-	Id        int       `orm:"column(id);pk"`
+	Id        int64     `orm:"column(id);pk"`
 	Photo     *Photos   `orm:"column(photo_id);rel(fk)"`
 	Content   string    `orm:"column(content);null" form:"content" valid:"Required"`
 	CreatedAt time.Time `orm:"column(created_at);type(timestamp);null"`
@@ -47,7 +47,7 @@ func AddPhotoComments(m *PhotoComments) (id int64, err error) {
 
 // GetPhotoCommentsById retrieves PhotoComments by Id. Returns error if
 // Id doesn't exist
-func GetPhotoCommentsById(id int) (v *PhotoComments, err error) {
+func GetPhotoCommentsById(id int64) (v *PhotoComments, err error) {
 	o := orm.NewOrm()
 	v = &PhotoComments{Id: id}
 	if err = o.Read(v); err == nil {
@@ -132,7 +132,7 @@ func UpdatePhotoCommentsById(m *PhotoComments) (err error) {
 
 // DeletePhotoComments deletes PhotoComments by Id and returns error if
 // the record to be deleted doesn't exist
-func DeletePhotoComments(id int) (err error) {
+func DeletePhotoComments(id int64) (err error) {
 	o := orm.NewOrm()
 	v := PhotoComments{Id: id}
 	// ascertain id exists in the database
