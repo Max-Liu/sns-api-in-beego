@@ -108,7 +108,7 @@ func GetMsgToMe(userIdStr string, offset, limit int64) []*MsgMeApi {
 
 			user, _ := GetUsersById(int64(msgMap["UserId"].(float64)))
 
-			msgMeApi.Content = user.Name + "喜欢了你关注了"
+			msgMeApi.Content = user.Name + "关注了你"
 			msgMeApi.HeadImage = user.Head
 			msgMeApi.UserId = user.Id
 			msgMeApi.CreatedAt = helper.GetTimeAgo(int64(msgMap["CreatedAt"].(float64)))
@@ -160,7 +160,7 @@ func GetFollowingTimeline(currentUserId int64, offset int64, limit int64) ([]*Ms
 			msgApi := new(MsgTimelineApi)
 
 			userId := int64(msgMap["UserId"].(float64))
-			targetUserId := int64(msgMap["TargetUserId"].(float64))
+			targetUserId := int64(msgMap["TargetId"].(float64))
 
 			sourceUser, _ := GetUsersById(userId)
 			targetUser, _ := GetUsersById(targetUserId)
