@@ -22,6 +22,8 @@ type Photos struct {
 	UpdatedAt time.Time `orm:"column(updated_at);type(timestamp);null"`
 	User      *Users    `orm:"column(user_id);rel(fk)"`
 	Likes     int64     `orm:"column(likes);null"`
+	X         float64   `orm:"column(x);null" form:"x"`
+	Y         float64   `orm:"column(y);null" form:"y"`
 }
 type PhotosApi struct {
 	Id        int64
@@ -32,6 +34,8 @@ type PhotosApi struct {
 	Likes     int64
 	Comments  int64
 	HasLiked  bool
+	X         float64
+	Y         float64
 }
 
 func init() {
@@ -45,6 +49,9 @@ func ConverToPhotoApiStruct(m *Photos, meta ...interface{}) (data *PhotosApi) {
 	data.CreatedAt = helper.GetTimeAgo(m.CreatedAt.Unix())
 	data.User = ConverToUserApiStruct(m.User)
 	data.Likes = m.Likes
+	data.X = m.X
+	data.Y = m.Y
+
 	data.Path = m.Path
 	data.Comments = GetPhotosCommentCount(m.Id)
 	if len(meta) > 0 {

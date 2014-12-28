@@ -33,6 +33,8 @@ func (this *PhotosController) URLMapping() {
 // @Description 发布照片
 // @Param	photo		Form 	File	true		"用户发布的照片"
 // @Param	title		form 	String	true		"照片描述"
+// @Param	x		form 	String	true		"地理位置x"
+// @Param	y		form 	String	true		"地理位置y"
 // @Success 200 {int} models.Photos.Id
 // @Failure 403 body is empty
 // @router / [post]
