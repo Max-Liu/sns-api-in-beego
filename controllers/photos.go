@@ -124,6 +124,7 @@ func (this *PhotosController) GetOne() {
 // @Param	sortby	query	string	false	"获取最新sortby=created_at;获取最热sortby=likes。默认获取最新"
 // @Param	offset	query	string	false	"结果索引"
 // @Param	myphoto	query	string	false	"为1是获取我的照片列表,默认获取全部"
+// @Param	user_id	query	string	false	"获取某一个用户的照片列表,默认获取全部"
 // @Success 200 {object} models.Photos
 // @Failure 403
 // @router / [get]
@@ -137,6 +138,12 @@ func (this *PhotosController) GetAll() {
 			userIdInt := this.GetSession("user").(models.Users).Id
 			userIdStr := strconv.FormatInt(userIdInt, 10)
 			query["user_id"] = userIdStr
+		}
+	}
+
+	if v := this.GetString("user_id"); err == nil {
+		if v != "" {
+			query["user_id"] = v
 		}
 	}
 
