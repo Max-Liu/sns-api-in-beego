@@ -110,7 +110,7 @@ func (this *ArticlesController) GetAll() {
 		offset = int64(v)
 	}
 	l, err := models.GetAllArticles(query, fields, sortby, order, offset, limit)
-	oneMore, _ := models.GetAllArticles(query, fields, sortby, order, offset, limit)
+	oneMore, _ := models.GetAllArticles(query, fields, sortby, order, offset+limit, 1)
 	if len(oneMore) == 0 {
 		data["Has_more"] = 0
 
