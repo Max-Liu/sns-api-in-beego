@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"pet/utils"
 	"strings"
 	"time"
 
@@ -19,7 +20,7 @@ type PhotoComments struct {
 }
 type PhotoCommentsApi struct {
 	Content   string
-	CreatedAt int64
+	CreatedAt string
 	UserName  string
 	UserImage string
 }
@@ -27,7 +28,7 @@ type PhotoCommentsApi struct {
 func ConverToCommentsApirStruct(m *PhotoComments) (data *PhotoCommentsApi) {
 	data = new(PhotoCommentsApi)
 	data.Content = m.Content
-	data.CreatedAt = m.CreatedAt.Unix()
+	data.CreatedAt = helper.GetTimeAgo(m.CreatedAt.Unix())
 	data.UserName = m.User.Name
 	data.UserImage = m.User.Head
 	return data

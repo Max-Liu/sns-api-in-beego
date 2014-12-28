@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"pet/utils"
 	"strings"
 	"time"
 
@@ -18,11 +19,11 @@ type Likes struct {
 }
 
 type LikesApi struct {
-	CreatedAt int64
+	CreatedAt string
 	Photo     *PhotosApi
 }
 type LikesUsersApi struct {
-	CreatedAt int64
+	CreatedAt string
 	UserName  string
 	UserImage string
 	UserId    int64
@@ -30,7 +31,7 @@ type LikesUsersApi struct {
 
 func ConverToLikedPhotoApiStruct(m *Likes) (data *LikesApi) {
 	data = new(LikesApi)
-	data.CreatedAt = m.CreatedAt.Unix()
+	data.CreatedAt = helper.GetTimeAgo(m.CreatedAt.Unix())
 	data.Photo = ConverToPhotoApiStruct(m.Photo)
 	return data
 }
@@ -192,7 +193,7 @@ func GetUsersByLikesPhoto(photoId int64) (usersList []*LikesUsersApi, err error)
 		user, _ := GetUsersById(userId.(int64))
 		data := new(LikesUsersApi)
 
-		data.CreatedAt = CreatedAt.Unix()
+		data.CreatedAt = helper.GetTimeAgo(CreatedAt.Unix())
 		data.UserImage = user.Head
 		data.UserName = user.Name
 		data.UserId = userId.(int64)
