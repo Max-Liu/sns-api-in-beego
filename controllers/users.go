@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"os"
 	"pet/models"
 	"pet/utils"
@@ -322,4 +323,65 @@ func (this *UsersController) CurrentPostion() {
 	outPut := helper.Reponse(0, nil, "")
 	this.Data["json"] = outPut
 	this.ServeJson()
+}
+
+// @Title 更新密码
+// @Description 密码
+// @Param	id			path 	string	true		"用户ID"
+// @Param	old_pass		form	string		true		"旧密码"
+// @Param	new_pass	form 	String	false		"新密码"
+// @Success 200 {int} models.Users.Id
+// @Failure 403 body is empty
+// @router /reset_pass/:id [post]
+func (this *UsersController) ResetPassword() {
+
+	idStr := this.Ctx.Input.Params[":id"]
+	id, _ := strconv.ParseInt(idStr, 10, 0)
+
+	userSession := this.GetSession("user")
+	user := userSession.(models.Users)
+
+	if userSession.(models.Users).Id == id {
+		var v models.Users
+		valid := validation.Validation{}
+		v = user
+
+		passed, _ := valid.Valid(&v)
+		if !passed {
+			outPut := helper.Reponse(1, nil, valid.Errors[0].Key+" "+valid.Errors[0].Message)
+			this.Data["json"] = outPut
+		} else {
+
+			oldPassword := this.GetString("old_pass")
+			newPassword := this.GetString("new_pass")
+
+			v, _ := models.GetUsersById(id)
+			if v.Password != oldPassword {
+				err = errors.New("旧密码不正确")
+			} else {
+				err = nil
+			}
+
+			if err != nil {
+				outPut := helper.Reponse(1, nil, err.Error())
+				this.Data["json"] = outPut
+			} else {
+				v.Password = newPassword
+				if err := models.UpdateUsersById(v); err == nil {
+					data := models.ConverToUserApiStruct(v)
+					outPut := helper.Reponse(0, data, "更新成功")
+					this.Data["json"] = outPut
+				} else {
+					outPut := helper.Reponse(1, nil, err.Error())
+					this.Data["json"] = outPut
+				}
+			}
+		}
+	} else {
+		outPut := helper.Reponse(1, nil, "没有权限更新其它用户")
+		this.Data["json"] = outPut
+	}
+
+	this.ServeJson()
+
 }

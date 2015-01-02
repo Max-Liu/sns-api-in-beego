@@ -69,6 +69,7 @@ func init() {
 			beego.NSRouter("/login", &controllers.UsersController{}, "get:Login"),
 			beego.NSRouter("/logout", &controllers.UsersController{}, "get:Logout"),
 			beego.NSRouter("/register", &controllers.UsersController{}, "post:Register"),
+			beego.NSRouter("/reset_pass", &controllers.UsersController{}, "post:ResetPassword"),
 			beego.NSRouter("/send_position", &controllers.UsersController{}, "post:CurrentPostion"),
 			beego.NSInclude(
 				&controllers.UsersController{},
