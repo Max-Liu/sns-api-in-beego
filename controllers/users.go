@@ -67,7 +67,7 @@ func (this *UsersController) Register() {
 // @Param	id			path 	string	true		"用户ID"
 // @Param	gender		form	Int		true		"用户性别"
 // @Param	birthday	form 	String	false		"生日"
-// @Param	gender		form 	String	false		"性别"
+// @Param	name	form 	String	false			"姓名"
 // @Param	intro		form 	String	false		"简介"
 // @Param	address		form 	String	false		"地址"
 // @Param	head		form	File	true		"头像图片"
@@ -100,6 +100,7 @@ func (this *UsersController) Put() {
 			v.Gender = gender
 			v.Address = this.GetString("address")
 			v.Intro = this.GetString("intro")
+			v.Name = this.GetString("name")
 
 			todayDateDir := "/" + helper.GetTodayDate()
 			if _, err := os.Stat(uploadPhotoPath + todayDateDir); os.IsNotExist(err) {
