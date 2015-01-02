@@ -44,6 +44,11 @@ func init() {
 // last inserted Id on success.
 func AddLikes(m *Likes) (id int64, err error) {
 	o := orm.NewOrm()
+
+	o.QueryTable("photos").Filter("id", m.Photo.Id).Update(orm.Params{
+		"likes": orm.ColValue(orm.Col_Add, 1),
+	})
+	o = orm.NewOrm()
 	id, err = o.Insert(m)
 	return
 }
@@ -171,6 +176,11 @@ func DeleteLikedPhoto(userId, photoId int64) (num int64, err error) {
 
 	if err = o.Read(&v, "target_id", "user_id"); err == nil {
 		num, err = o.Delete(&v)
+
+		o = orm.NewOrm()
+		o.QueryTable("photos").Filter("id", photoId).Update(orm.Params{
+			"likes": orm.ColValue(orm.Col_Minus, 1),
+		})
 	}
 	return num, err
 }
