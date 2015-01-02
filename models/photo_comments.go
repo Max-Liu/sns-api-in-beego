@@ -23,6 +23,7 @@ type PhotoCommentsApi struct {
 	CreatedAt string
 	UserName  string
 	UserImage string
+	UserId    int64
 }
 
 func ConverToCommentsApirStruct(m *PhotoComments) (data *PhotoCommentsApi) {
@@ -31,6 +32,7 @@ func ConverToCommentsApirStruct(m *PhotoComments) (data *PhotoCommentsApi) {
 	data.CreatedAt = helper.GetTimeAgo(m.CreatedAt.Unix())
 	data.UserName = m.User.Name
 	data.UserImage = m.User.Head
+	data.UserId = m.User.Id
 	return data
 }
 
