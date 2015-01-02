@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"os"
 	"pet/models"
 	"pet/utils"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/validation"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // 用户信息
@@ -103,7 +105,10 @@ func (this *UsersController) Put() {
 			v.Name = this.GetString("name")
 
 			headImage := this.GetString("head")
-			if headImage != "0" {
+
+			log.Println(123456)
+			spew.Dump(headImage)
+			if headImage != "" {
 
 				todayDateDir := "/" + helper.GetTodayDate()
 				if _, err := os.Stat(uploadPhotoPath + todayDateDir); os.IsNotExist(err) {
