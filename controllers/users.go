@@ -102,26 +102,31 @@ func (this *UsersController) Put() {
 			v.Intro = this.GetString("intro")
 			v.Name = this.GetString("name")
 
-			todayDateDir := "/" + helper.GetTodayDate()
-			if _, err := os.Stat(uploadPhotoPath + todayDateDir); os.IsNotExist(err) {
-				os.Mkdir(uploadPhotoPath+todayDateDir, 0777)
-			}
-			currentUser := this.GetSession("user").(models.Users)
-			photoName := helper.GetGuid(currentUser.Id)
-			dateSubdir := "/" + string(photoName[0]) + string(photoName[1])
+			headImage := this.GetString("head")
+			if headImage != "0" {
 
-			if _, err := os.Stat(uploadPhotoPath + todayDateDir + dateSubdir); os.IsNotExist(err) {
-				os.Mkdir(uploadPhotoPath+todayDateDir+dateSubdir, 0777)
-			}
+				todayDateDir := "/" + helper.GetTodayDate()
+				if _, err := os.Stat(uploadPhotoPath + todayDateDir); os.IsNotExist(err) {
+					os.Mkdir(uploadPhotoPath+todayDateDir, 0777)
+				}
+				currentUser := this.GetSession("user").(models.Users)
+				photoName := helper.GetGuid(currentUser.Id)
+				dateSubdir := "/" + string(photoName[0]) + string(photoName[1])
 
-			imagePath := uploadPhotoPath + todayDateDir + dateSubdir + "/" + photoName + ".jpg"
-			err := this.SaveToFile("head", imagePath)
+				if _, err := os.Stat(uploadPhotoPath + todayDateDir + dateSubdir); os.IsNotExist(err) {
+					os.Mkdir(uploadPhotoPath+todayDateDir+dateSubdir, 0777)
+				}
+
+				imagePath := uploadPhotoPath + todayDateDir + dateSubdir + "/" + photoName + ".jpg"
+				err := this.SaveToFile("head", imagePath)
+				beego.Error(err)
+				v.Head = imagePath
+			}
 
 			if err != nil {
 				outPut := helper.Reponse(1, nil, err.Error())
 				this.Data["json"] = outPut
 			} else {
-				v.Head = imagePath
 				if err := models.UpdateUsersById(v); err == nil {
 					data := models.ConverToUserApiStruct(v)
 					outPut := helper.Reponse(0, data, "更新成功")
